@@ -4,9 +4,10 @@ import { useEffect, useRef, VideoHTMLAttributes } from "react";
 
 interface LazyVideoProps extends VideoHTMLAttributes<HTMLVideoElement> {
   src?: string;
+  pauseOnScroll?: boolean;
 }
 
-export default function LazyVideo({ src, className, style, ...props }: LazyVideoProps) {
+export default function LazyVideo({ src, className, style, pauseOnScroll = false, ...props }: LazyVideoProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
@@ -43,9 +44,9 @@ export default function LazyVideo({ src, className, style, ...props }: LazyVideo
 
     observer.observe(videoElement);
 
-    // 2. Scroll event listener to pause video WHILE scrolling (saves huge CPU/GPU)
+    // 2. Optional Scroll event listener to pause video WHILE scrolling (saves huge CPU/GPU)
     const onScroll = () => {
-      if (!isIntersecting) return;
+      if (!isIntersecting || !pauseOnScroll) return;
       
       // Pause immediately on scroll
       pauseVideo();
@@ -59,14 +60,18 @@ export default function LazyVideo({ src, className, style, ...props }: LazyVideo
       }, 150);
     };
 
-    window.addEventListener("scroll", onScroll, { passive: true });
+    if (pauseOnScroll) {
+      window.addEventListener("scroll", onScroll, { passive: true });
+    }
 
     return () => {
       observer.unobserve(videoElement);
-      window.removeEventListener("scroll", onScroll);
+      if (pauseOnScroll) {
+        window.removeEventListener("scroll", onScroll);
+      }
       clearTimeout(scrollTimeout);
     };
-  }, [props.autoPlay]);
+  }, [props.autoPlay, pauseOnScroll]);
 
   return (
     <video

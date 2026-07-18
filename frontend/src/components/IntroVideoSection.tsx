@@ -20,6 +20,7 @@ export default function IntroVideoSection() {
           muted 
           loop 
           playsInline
+          pauseOnScroll={true}
           className="absolute top-1/2 left-1/2 object-cover"
           style={{
             width: "100vh",
