@@ -12,7 +12,16 @@ export default function IntroVideoSection() {
     >
       
       {/* Background — Video on desktop, gradient on mobile */}
-      {!isMobile ? (
+      {isMobile ? (
+        <div className="absolute inset-0 z-0">
+          <div className="absolute inset-0 bg-gradient-to-br from-[#1a0000] via-black to-[#0a0000]" />
+          <div className="absolute inset-0 opacity-30"
+            style={{
+              background: "radial-gradient(ellipse at 50% 40%, #ff0000 0%, transparent 60%)",
+            }}
+          />
+        </div>
+      ) : (
         <div
           className="absolute inset-0 pointer-events-none z-0"
           style={{ contain: "strict", isolation: "isolate" }}
@@ -36,17 +45,15 @@ export default function IntroVideoSection() {
           </video>
           <div className="absolute inset-0 bg-black/60 z-10" />
         </div>
-      ) : (
-        <div className="absolute inset-0 z-0 bg-gradient-to-br from-[#1a0000] via-black to-[#0d0000]" />
       )}
 
       {/* Main Content */}
-      <div className="relative z-20 text-center w-full flex flex-col items-center justify-center h-full pt-16 px-2 md:px-6">
+      <div className="relative z-20 text-center w-full flex flex-col items-center justify-center h-full pt-16 px-4 md:px-6">
         <div className="opacity-0 animate-slide-up flex flex-col items-center w-full" style={{ animationDelay: "0.2s", animationFillMode: "forwards" }}>
-          <span className="text-xl md:text-3xl font-light text-white uppercase tracking-[0.3em] mb-2 md:mb-4">
+          <span className="text-lg md:text-3xl font-light text-white uppercase tracking-[0.3em] mb-2 md:mb-4">
             Introducing
           </span>
-          <h1 className="text-[13vw] leading-[0.9] font-black text-[#ff1a1a] uppercase tracking-tighter animate-text-glow w-full whitespace-nowrap">
+          <h1 className="text-[15vw] md:text-[13vw] leading-[0.9] font-black text-[#ff1a1a] uppercase tracking-tighter animate-text-glow w-full whitespace-nowrap">
             Ashish Chhipa
           </h1>
         </div>
@@ -54,11 +61,11 @@ export default function IntroVideoSection() {
 
       {/* Scroll indicator */}
       <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-3 opacity-0 animate-slide-up" style={{ animationDelay: "0.8s", animationFillMode: "forwards" }}>
-        <p className="text-white font-medium tracking-widest text-sm uppercase">
+        <p className="text-white font-medium tracking-widest text-xs sm:text-sm uppercase">
           Scroll to Unlock Your Beast
         </p>
         <div className="animate-bounce mt-2">
-          <svg className="w-8 h-8 text-[#ff1a1a]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-6 h-6 sm:w-8 sm:h-8 text-[#ff1a1a]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
           </svg>
         </div>

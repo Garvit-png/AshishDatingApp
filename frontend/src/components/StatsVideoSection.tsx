@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useCallback } from "react";
+import { useIsMobile } from "@/hooks/useIsMobile";
 
 const stats = [
   { value: "4.9★", label: "Average Rating" },
@@ -10,6 +11,7 @@ const stats = [
 ];
 
 export default function StatsVideoSection() {
+  const isMobile = useIsMobile();
   const sectionRef = useRef<HTMLDivElement>(null);
   const videoWrapperRef = useRef<HTMLDivElement>(null);
   const statsOverlayRef = useRef<HTMLDivElement>(null);
@@ -53,7 +55,7 @@ export default function StatsVideoSection() {
   }, [onScroll]);
 
   return (
-    <div ref={sectionRef} className="relative bg-black" style={{ height: "300vh" }}>
+    <div ref={sectionRef} className="relative bg-black" style={{ height: isMobile ? "200vh" : "300vh" }}>
       <div className="sticky top-0 h-screen flex flex-col items-center justify-center overflow-hidden">
 
         {/* Video + Stats overlay wrapper */}

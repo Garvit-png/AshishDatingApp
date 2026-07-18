@@ -2,8 +2,10 @@
 
 import { useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
+import { useIsMobile } from "@/hooks/useIsMobile";
 
 export default function EyeRollSection() {
+  const isMobile = useIsMobile();
   const containerRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLSpanElement>(null);
@@ -45,7 +47,7 @@ export default function EyeRollSection() {
   }, [onScroll]);
 
   return (
-    <div ref={containerRef} className="relative w-full" style={{ height: "300vh" }}>
+    <div ref={containerRef} className="relative w-full" style={{ height: isMobile ? "200vh" : "300vh" }}>
       <div className="sticky top-0 w-full h-screen bg-black flex flex-col items-center justify-center overflow-hidden">
 
         {/* BIG RED BACKGROUND TEXT */}
@@ -53,7 +55,7 @@ export default function EyeRollSection() {
           <span
             ref={textRef}
             className="font-black uppercase text-[#ff0000] leading-none tracking-tighter whitespace-nowrap"
-            style={{ fontSize: "18vw", opacity: 0.8, willChange: "opacity" }}
+            style={{ fontSize: isMobile ? "22vw" : "18vw", opacity: 0.8, willChange: "opacity" }}
           >
             DONT STOP
           </span>
