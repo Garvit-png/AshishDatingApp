@@ -13,7 +13,7 @@ const products = [
     tag: "BESTSELLER",
     tagColor: "bg-[#7f0000]",
     price: "₹299",
-    href: "#opener-vault",
+    href: "https://pages.razorpay.com/pl_T7w20RI546muZh/view",
   },
   {
     id: 2,
@@ -23,7 +23,7 @@ const products = [
     tag: "POPULAR",
     tagColor: "bg-white",
     price: "₹499",
-    href: "#approach-blueprint",
+    href: "https://pages.razorpay.com/pl_T8KezcbkXSpP6H/view",
     featured: true,
   },
   {
@@ -34,7 +34,7 @@ const products = [
     tag: "NEW",
     tagColor: "bg-[#7f0000]",
     price: "₹299",
-    href: "#girl-psychology",
+    href: "https://pages.razorpay.com/pl_T7w8Pgiwh8NpMp/view",
   },
 ];
 
@@ -88,7 +88,7 @@ export default function CoursesSection() {
               style={{ transitionDelay: `${i * 120}ms` }}
             >
               {/* Book Cover */}
-              <Link href={product.href} className="w-full flex justify-center">
+              <Link href={product.href} target="_blank" rel="noopener noreferrer" className="w-full flex justify-center">
                 <div className="relative transition-all duration-500 ease-out hover:scale-105 cursor-pointer hover:z-20">
                   <div
                     className="relative w-56 sm:w-64 rounded-xl overflow-hidden ring-1 ring-white/10 shadow-2xl"
@@ -110,6 +110,8 @@ export default function CoursesSection() {
               <div className="mt-8 text-center w-full">
                 <Link
                   href={product.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="inline-block text-sm font-bold bg-white text-black px-10 py-3.5 rounded-full hover:bg-gray-200 transition-transform hover:scale-105 active:scale-95 shadow-lg"
                 >
                   Buy Now
