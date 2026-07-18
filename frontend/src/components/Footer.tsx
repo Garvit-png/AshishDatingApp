@@ -38,6 +38,7 @@ export default function Footer() {
         muted
         loop
         playsInline
+        preload="none"
         className="absolute inset-0 w-full h-full object-cover z-0"
       />
       {/* Overlay for readability */}

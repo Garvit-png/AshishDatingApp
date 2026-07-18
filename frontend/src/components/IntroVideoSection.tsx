@@ -2,17 +2,33 @@
 
 export default function IntroVideoSection() {
   return (
-    <section className="relative w-full h-screen overflow-hidden bg-black flex flex-col items-center justify-center">
+    <section
+      className="relative w-full h-screen overflow-hidden bg-black flex flex-col items-center justify-center"
+      style={{ contain: "layout style paint", isolation: "isolate" }}
+    >
       
       {/* Background Video (Rotated 90deg to landscape) */}
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
+      <div
+        className="absolute inset-0 pointer-events-none z-0"
+        style={{
+          contain: "strict",
+          isolation: "isolate",
+        }}
+      >
         <video 
           autoPlay 
           muted 
           loop 
           playsInline
-          className="absolute object-cover origin-center rotate-90"
-          style={{ width: "100vh", height: "100vw" }}
+          preload="auto"
+          className="absolute top-1/2 left-1/2 object-cover"
+          style={{
+            width: "100vh",
+            height: "100vw",
+            transform: "translate(-50%, -50%) rotate(90deg) translateZ(0)",
+            willChange: "transform",
+            backfaceVisibility: "hidden",
+          }}
         >
           <source src="/shuru.mp4" type="video/mp4" />
         </video>
@@ -46,3 +62,5 @@ export default function IntroVideoSection() {
     </section>
   );
 }
+
+
