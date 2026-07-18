@@ -97,16 +97,16 @@ export default function StatsVideoSection() {
               transition: "opacity 0.4s ease, transform 0.4s ease",
             }}
           >
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-8 sm:gap-12 w-full justify-items-center">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-12 w-full justify-items-center">
               {stats.map((stat, i) => (
                 <div key={i} className="flex flex-col items-center gap-1">
                   <span
                     className="font-black text-[#ff0000] leading-none drop-shadow-[0_0_20px_rgba(255,0,0,0.8)]"
-                    style={{ fontSize: "clamp(2.8rem, 6.5vw, 5rem)" }}
+                    style={{ fontSize: "clamp(2rem, 5vw, 5rem)" }}
                   >
                     {stat.value}
                   </span>
-                  <span className="text-white/90 text-sm sm:text-lg font-medium tracking-widest uppercase text-center">
+                  <span className="text-white/90 text-xs sm:text-lg font-medium tracking-widest uppercase text-center mt-2 sm:mt-0">
                     {stat.label}
                   </span>
                 </div>

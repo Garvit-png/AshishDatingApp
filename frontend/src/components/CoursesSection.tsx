@@ -63,9 +63,9 @@ export default function CoursesSection() {
       className="relative bg-black min-h-screen flex flex-col items-center py-20 px-4 sm:px-6 lg:px-8 overflow-hidden"
     >
       <div className="max-w-6xl mx-auto w-full flex-grow flex flex-col justify-center">
-        {/* Header - Fixed at the top */}
+        {/* Header */}
         <div
-          className={`absolute top-16 md:top-24 left-0 w-full text-center transition-all duration-700 px-4 z-30 ${
+          className={`relative w-full text-center transition-all duration-700 px-4 z-30 mb-12 md:mb-20 ${
             visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
           }`}
         >
@@ -78,7 +78,7 @@ export default function CoursesSection() {
         </div>
 
         {/* Book Cards */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-12 sm:gap-16 mt-20 md:mt-32">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-12 sm:gap-16">
           {products.map((product, i) => (
             <div
               key={product.id}
