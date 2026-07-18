@@ -53,7 +53,7 @@ export default function IntroVideoSection() {
           <span className="text-lg md:text-3xl font-light text-white uppercase tracking-[0.3em] mb-2 md:mb-4">
             Introducing
           </span>
-          <h1 className="text-[15vw] md:text-[13vw] leading-[0.9] font-black text-[#ff1a1a] uppercase tracking-tighter animate-text-glow w-full whitespace-nowrap">
+          <h1 className="text-[12.5vw] md:text-[13vw] leading-[0.9] font-black text-[#ff1a1a] uppercase tracking-tighter animate-text-glow w-full">
             Ashish Chhipa
           </h1>
         </div>

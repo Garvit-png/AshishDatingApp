@@ -39,7 +39,7 @@ export default function HeroSection() {
           <div className="flex-1 w-full flex flex-col items-center lg:items-start text-center lg:text-left">
 
             {/* Main Headline */}
-            <h1 className="text-[12vw] sm:text-[8vw] lg:text-[5.5vw] font-black text-white leading-[1.1] mb-4 md:mb-6 tracking-tighter w-full whitespace-nowrap flex flex-col gap-2 md:gap-4">
+            <h1 className="text-[10.5vw] sm:text-[8vw] lg:text-[5.5vw] font-black text-white leading-[1.1] mb-4 md:mb-6 tracking-tighter w-full flex flex-col gap-2 md:gap-4">
               <span className="block opacity-0 animate-slide-up" style={{ animationDelay: "0.1s", animationFillMode: "forwards" }}>
                 Attract <span className="text-[#ff1a1a] animate-text-glow">Better.</span>
               </span>
