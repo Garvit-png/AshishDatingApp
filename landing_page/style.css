@@ -1,0 +1,915 @@
+/*======================================
+  GOOGLE RESET
+======================================*/
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+html{
+    scroll-behavior:smooth;
+}
+
+body{
+    font-family:'Poppins',sans-serif;
+    background:#000;
+    color:#fff;
+    overflow-x:hidden;
+}
+
+a{
+    text-decoration:none;
+    color:inherit;
+}
+
+img{
+    max-width:100%;
+    display:block;
+}
+
+ul{
+    list-style:none;
+}
+
+
+/*======================================
+  COMMON
+======================================*/
+
+.container{
+    width:90%;
+    max-width:1280px;
+    margin:auto;
+}
+
+
+/*======================================
+  NAVBAR
+======================================*/
+
+.navbar{
+    position:absolute;
+    top:0;
+    left:0;
+    width:100%;
+    z-index:1000;
+    padding:28px 0;
+}
+
+.nav-container{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+.logo{
+    font-size:28px;
+    font-weight:700;
+    letter-spacing:2px;
+}
+
+.nav-links{
+    display:flex;
+    gap:45px;
+}
+
+.nav-links a{
+    font-size:16px;
+    font-weight:500;
+    transition:.3s;
+}
+
+.nav-links a:hover{
+    color:#d8d8d8;
+}
+
+.login-btn{
+    padding:13px 28px;
+    background:#fff;
+    color:#000;
+    border-radius:12px;
+    font-weight:600;
+    transition:.3s;
+}
+
+.login-btn:hover{
+    transform:translateY(-3px);
+}
+
+
+/*======================================
+  HERO
+======================================*/
+
+.hero{
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    position:relative;
+    overflow:hidden;
+    padding-top:120px;
+}
+
+.hero-container{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    align-items:center;
+    gap:60px;
+}
+
+
+/* Left */
+
+.hero-content h1{
+    font-size:68px;
+    line-height:1.12;
+    font-weight:320;
+    margin-bottom:30px;
+    
+}
+
+.hero-content span{
+    color:#ffffff;
+}
+
+.hero-content p{
+    width:520px;
+    color:#d7d7d7;
+    font-size:18px;
+    line-height:1.8;
+    margin-bottom:45px;
+}
+
+.hero-btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:18px 42px;
+    background:#fff;
+    color:#000;
+    border-radius:14px;
+    font-weight:700;
+    transition:.3s;
+}
+
+.hero-btn:hover{
+    transform:translateY(-4px);
+    box-shadow:0 15px 35px rgba(255, 255, 255, 0.18);
+}
+
+
+/* Right */
+
+.hero-image{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
+
+.hero-image-box{
+    position:relative;
+    width:560px;          /* adjust according to your image */
+}
+
+.hero-image-box img{
+    width:100%;
+    display:block;
+    border-radius:40%;
+}
+
+
+/* Floating Card */
+
+.hero-image{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
+
+.hero-image-box{
+    position:relative;
+    width:560px;
+}
+
+.hero-image-box img{
+    width:100%;
+    display:block;
+    border-radius:38%;
+}
+
+/* Floating Card */
+
+.floating-badge {
+    position: absolute;
+    top: 40px;
+    left: -70px;
+    width:360px;
+    height:80px;
+    background: #fff;
+    border-radius: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px 35px; /* Side padding badhai aur top/bottom kam ki */
+    z-index: 20;
+    box-shadow: 0 12px 30px rgba(0,0,0,.18);
+    box-sizing: border-box; /* Width fix rakhta hai */
+    overflow: hidden; /* Content ko bahar nikalne se rokega */
+}
+
+/* Left Side (Text Box) */
+.badge-left {
+    display: flex;
+    flex-direction: column; /* Text ek ke niche ek aane ke liye */
+    flex: 1; /* Yeh text ko bachi hui saari jagah dega */
+}
+
+.badge-left p {
+    font-size: 15px;
+    font-weight: 500;
+    color: #000000; /* Pure Black */
+    margin: 0 0 4px 0; /* Margin reset ki */
+}
+
+.badge-left h2 {
+    display: flex;
+    align-items: flex-end;
+    gap: 5px;
+    margin: 0;
+    font-size:15px; /* Font thoda chota kiya taaki badge ke andar fit aaye */
+    font-weight: 500;
+    color: #000000; /* Pure Black */
+    line-height:1;
+}
+
+.badge-left h2 span {
+    font-size: 18px;
+    font-weight: 500;
+    color: #000000; /* Pure Black */
+    margin-bottom: 4px;
+}
+
+/* Right Side (Image/Avatars) */
+.badge-users {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    margin-top: 15px; /* Image ko thoda niche push karne ke liye */
+    flex-shrink: 0; /* Image container ko dabne nahi dega */
+}
+
+.badge-users img {
+    width:40px;/* Purani width 100px bohot kam thi strip ke liye, isko adjust kiya */
+    max-width: 50%;
+    height: auto;
+    display: block;
+    object-fit: contain;
+}
+
+
+  STATS
+/*====================================*/
+
+.stats{
+    padding:90px 0;
+    background: #e4e4e4;;
+}
+
+.stats-container{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:30px;
+}
+
+.stat-card{
+    background:#ffffff;
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:22px;
+    padding:38px 25px;
+    text-align:center;
+    transition:.35s;
+}
+
+.stat-card:hover{
+    transform:translateY(-8px);
+    border-color:rgba(255,255,255,.18);
+    box-shadow:0 18px 45px rgba(0,0,0,.45);
+}
+
+.stat-card h2{
+    font-size:38px;
+    font-weight:700;
+    margin-bottom:12px;
+}
+
+.stat-card p{
+    font-size:14px;
+    color:#000000;
+    text-transform:uppercase;
+    letter-spacing:1px;
+    line-height:1.6;
+}
+
+
+/*======================================
+  DATE SMARTER
+======================================*/
+
+.date-smarter{
+    padding:110px 0;
+    text-align:center;
+}
+
+.date-smarter h2{
+    font-size:52px;
+    font-weight:800;
+    margin-bottom:18px;
+}
+
+.date-smarter p{
+    width:700px;
+    max-width:100%;
+    margin:0 auto 60px;
+    color:#bfbfbf;
+    font-size:18px;
+    line-height:1.8;
+}
+
+.video-wrapper{
+    width:100%;
+    max-width:1050px;
+    margin:auto;
+    border-radius:28px;
+    overflow:hidden;
+    background:#161616;
+    box-shadow:0 25px 60px rgba(0,0,0,.45);
+}
+
+.video-wrapper iframe{
+    width:100%;
+    height:600px;
+    display:block;
+}
+
+
+/*======================================
+  CTA BANNER
+======================================*/
+
+.cta-banner{
+    width:100%;
+    background:#fff;
+    padding:70px 0;
+}
+
+.cta-container{
+    width:100%;
+    max-width:none;
+    background:#fff;
+    padding:0;
+    border:none;
+    border-radius:0;
+    text-align:center;
+}
+
+.cta-container h2{
+    font-size:34px;
+    font-weight:600;
+    line-height:1.4;
+    max-width:950px;
+    margin:0 auto 35px;
+    color:#000;
+}
+
+.cta-btn{
+    display:inline-block;
+    padding:12px 34px;
+    font-size:15px;
+    font-weight:500;
+    color:#000;
+    background:#fff;
+    border:1.5px solid #000;
+    border-radius:4px;
+    transition:.3s;
+}
+
+.cta-btn:hover{
+    background:#000;
+    color:#fff;
+}
+
+/*======================================
+  COURSES
+======================================*/
+
+.courses{
+    padding:110px 0;
+    background:#000;
+}
+
+.section-heading{
+    text-align:center;
+    margin-bottom:70px;
+}
+
+.section-heading h2{
+    font-size:52px;
+    font-weight:500;
+    margin-bottom:18px;
+    color:#fff;
+}
+
+.section-heading p{
+    max-width:700px;
+    margin:0 auto;
+    font-size:17px;
+    line-height:1.8;
+    color:#bdbdbd;
+}
+
+.courses-grid{
+    display:flex;
+    justify-content:center;
+    align-items:flex-end;
+    gap:8px;          /* adjust between 5px–15px */
+    flex-wrap:nowrap;
+}
+.course-card:nth-child(2){
+    width:340px;
+    margin:0 8px;
+}
+
+.course-card:first-child,
+.course-card:last-child{
+    width:270px;
+}
+
+.course-card{
+    width:360px;
+    background:transparent;
+    border:none;
+    border-radius:0;
+    overflow:hidden;
+    box-shadow:none;
+}
+   
+
+.course-card:hover{
+    transform:translateY(-10px);
+    box-shadow:0 22px 55px rgba(0,0,0,.45);
+}
+
+.course-image{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    overflow:hidden;
+}
+
+.course-image img{
+    width:100%;
+    height:auto;
+    object-fit:contain;
+    transition:.4s;
+}
+
+.course-card:hover .course-image img{
+    transform:scale(1.06);
+}
+
+.course-content{
+    padding:28px;
+}
+
+.course-content h3{
+    font-size:26px;
+    font-weight:700;
+    margin-bottom:16px;
+    color:#fff;
+}
+
+.course-content p{
+    color:#bdbdbd;
+    font-size:15px;
+    line-height:1.8;
+    margin-bottom:28px;
+}
+
+
+.course-btn:hover{
+    background:#e8e8e8;
+    transform:translateY(-3px);
+}
+
+/*======================================
+  FOOTER
+======================================*/
+
+.footer{
+
+    
+    width:100%;
+    background:#fff;
+    padding:70px 0 35px;
+    height:auto;
+
+}
+
+.footer-container{
+    width:90%;
+    max-width:1350px;
+    margin:0 auto;
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+}
+
+
+/* LEFT */
+
+.footer-left{
+    width:56%;
+}
+
+.footer-left h2{
+    font-size:60px;
+    font-weight:700;
+    color:#111;
+    margin-bottom:30px;
+}
+
+.footer-left p{
+    font-size:18px;
+    line-height:1.9;
+    line-height: 2;
+    color:#333;
+    max-width:720px;
+    margin-bottom:45px;
+}
+
+.footer-right{
+    width:30%;
+    color:#111;
+    position:relative;
+}
+
+.made-with{
+    display:block;
+    text-align:right;
+    font-size:16px;
+    font-weight:600;
+    margin-bottom:35px;
+}
+
+.footer-right h2{
+    font-size:72px;
+    font-weight:700;
+    margin: 18px 0 25px;
+}
+
+.footer-right p{
+    font-size:18px;
+    line-height:1.9;
+    color:#333;
+    margin-bottom:10px;
+}
+.footer-bottom-links{
+    display:flex;
+    gap:28px;
+}
+
+
+/* LinkedIn */
+
+.sellixa-social{
+
+    width:48px;
+    height:48px;
+
+    border:2px solid #111;
+
+    border-radius:50%;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+}
+
+.sellixa-social img{
+
+    width:20px;
+
+}
+
+
+/* SOCIAL */
+
+.social-icons{
+    display:flex;
+    gap:18px;
+    margin-bottom:55px;
+}
+
+.social-icons a{
+    width:52px;
+    height:52px;
+    border:2px solid #111;
+    border-radius:50%;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
+
+.social-icons img{
+    width:22px;
+}
+
+.social-icons a:hover{
+
+    background:#111;
+
+}
+
+.footer-bottom{
+    width:90%;
+    max-width:1350px;
+    margin:60px auto 0;
+
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-wrap:nowrap;
+}
+
+.footer-bottom-links{
+    display:flex;
+    align-items:center;
+    gap:25px;
+}
+
+.footer-bottom-links a{
+    color:#111;
+    font-size:14px;
+    transition: .3s;
+}
+
+.footer-bottom-links a:hover{
+    color:#666;
+}
+
+.copyright{
+    font-size:15px;
+    color:#111;
+    margin-top:60px;
+
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    width:100%;
+
+}
+.sellixa-social{
+    width:52px;
+    height:52px;
+    border:2px solid #111;
+    border-radius:50%;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
+
+.sellixa-social img{
+    width:22px;
+}
+
+/*======================================
+  RESPONSIVE
+======================================*/
+
+/* ======================================
+   MOBILE RESPONSIVE
+====================================== */
+
+@media (max-width:991px){
+
+    .container{
+        width:92%;
+    }
+
+    /* Navbar */
+
+    .nav-container{
+        flex-direction:column;
+        gap:18px;
+    }
+
+    .nav-links{
+        gap:25px;
+    }
+
+    /* Hero */
+
+    .hero{
+        padding:160px 0 70px;
+    }
+
+    .hero-container{
+        grid-template-columns:1fr;
+        gap:60px;
+        text-align:center;
+    }
+
+    .hero-content h1{
+        font-size:52px;
+    }
+
+    .hero-content p{
+        width:100%;
+        max-width:550px;
+        margin:0 auto 35px;
+    }
+
+    .hero-image-box{
+        width:420px;
+        max-width:100%;
+        margin:auto;
+    }
+
+    /* Floating Badge */
+
+    .floating-badge{
+        width:330px;
+        height:90px;
+
+        left:50%;
+        top:-40px;
+
+        transform:translateX(-50%);
+    }
+
+    /* Stats */
+
+    .stats-container{
+        grid-template-columns:repeat(2,1fr);
+    }
+
+    /* Courses */
+
+    .courses-grid{
+        flex-wrap:wrap;
+        gap:45px;
+    }
+
+    .course-card,
+    .course-card:first-child,
+    .course-card:nth-child(2),
+    .course-card:last-child{
+        width:320px;
+        transform:none !important;
+    }
+
+    /* Footer */
+
+    .footer-container{
+        flex-direction:column;
+        gap:60px;
+    }
+
+    .footer-left,
+    .footer-right{
+        width:100%;
+    }
+
+    .made-with{
+        text-align:left;
+    }
+
+    .footer-bottom{
+        flex-direction:column;
+        gap:20px;
+        align-items:flex-start;
+    }
+
+    .footer-bottom-links{
+        flex-wrap:wrap;
+        gap:18px;
+    }
+
+}
+
+
+
+@media (max-width:768px){
+
+    .hero-content h1{
+        font-size:42px;
+        line-height:1.2;
+    }
+
+    .hero-content p{
+        font-size:16px;
+    }
+
+    .hero-btn,
+    .cta-btn,
+    .login-btn{
+        width:100%;
+        max-width:320px;
+    }
+
+    .hero-image-box{
+        width:320px;
+    }
+
+    .floating-badge{
+        width:290px;
+        height:80px;
+        top:-30px;
+    }
+
+    .badge-text h2{
+        font-size:36px;
+    }
+
+    .stats-container{
+        grid-template-columns:1fr;
+    }
+
+    .section-heading h2,
+    .date-smarter h2{
+        font-size:36px;
+    }
+
+    .video-wrapper iframe{
+        height:240px;
+    }
+
+    .cta-container h2{
+        font-size:28px;
+    }
+
+    .footer-left h2,
+    .footer-right h2{
+        font-size:42px;
+    }
+
+}
+
+
+
+@media (max-width:480px){
+
+    .logo{
+        font-size:22px;
+    }
+
+    .nav-links{
+        flex-direction:column;
+        gap:15px;
+    }
+
+    .hero{
+        padding-top:180px;
+    }
+
+    .hero-content h1{
+        font-size:34px;
+    }
+
+    .hero-content p{
+        font-size:15px;
+    }
+
+    .hero-image-box{
+        width:260px;
+    }
+
+    .floating-badge{
+        width:250px;
+        height:75px;
+        padding:12px 18px;
+    }
+
+    .badge-text h2{
+        font-size:30px;
+    }
+
+    .badge-users img{
+        width:120px;
+    }
+
+    .social-icons{
+        flex-wrap:wrap;
+    }
+
+    .footer-bottom-links{
+        flex-direction:column;
+        gap:12px;
+    }
+
+}
