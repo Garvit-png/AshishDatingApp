@@ -19,8 +19,6 @@ export default function HomePage() {
         <HeroSection />
         <StatsVideoSection />
         <StatsSection />
-        <DateSmarterSection />
-        <CTABanner />
         <CoursesSection />
       </main>
       <Footer />

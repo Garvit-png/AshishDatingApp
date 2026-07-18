@@ -30,16 +30,28 @@ const socialIcons = {
 
 export default function Footer() {
   return (
-    <footer className="bg-white border-t border-gray-100">
+    <footer className="relative border-t border-white/10 overflow-hidden">
+      {/* Video Background */}
+      <video
+        src="/ghoda.mp4"
+        autoPlay
+        muted
+        loop
+        playsInline
+        className="absolute inset-0 w-full h-full object-cover z-0"
+      />
+      {/* Overlay for readability */}
+      <div className="absolute inset-0 bg-black/60 z-0" />
+
       {/* Main Footer */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-20">
           {/* Left Column – Ashish Chhipa */}
           <div>
-            <h3 className="text-base font-black text-black tracking-widest uppercase mb-4">
+            <h3 className="text-base font-black text-white tracking-widest uppercase mb-4">
               Ashish Chhipa
             </h3>
-            <p className="text-sm text-gray-500 leading-relaxed max-w-sm mb-6">
+            <p className="text-sm text-gray-300 leading-relaxed max-w-sm mb-6">
               Ashish Chhipa is a dating coach and content creator who helps people build confidence,
               understand the science behind attraction, and improve their dating skills. To improve his
               advice based on psychology and real-life experience, he pledges his values to
@@ -48,36 +60,37 @@ export default function Footer() {
             </p>
             {/* Social Icons */}
             <div className="flex items-center gap-3">
-              {Object.entries(socialIcons).map(([name, icon]) => (
-                <Link
-                  key={name}
-                  href={`#${name}`}
-                  className="w-9 h-9 rounded-full border border-gray-200 flex items-center justify-center text-gray-500 hover:text-black hover:border-black transition-all duration-200 hover:scale-110"
-                  aria-label={name}
-                >
-                  {icon}
-                </Link>
-              ))}
+              <Link
+                href="https://www.instagram.com/ashishchhipaofficial/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-9 h-9 rounded-full border border-gray-500 flex items-center justify-center text-gray-400 hover:text-white hover:border-white transition-all duration-200 hover:scale-110"
+                aria-label="Instagram"
+              >
+                {socialIcons.instagram}
+              </Link>
             </div>
           </div>
 
           {/* Right Column – Sellixa */}
-          <div className="md:border-l md:border-gray-100 md:pl-12 lg:pl-20">
+          <div className="md:border-l md:border-white/10 md:pl-12 lg:pl-20">
             <div className="flex items-start justify-between gap-4 mb-4">
-              <h3 className="text-base font-black text-black tracking-widest uppercase">
+              <h3 className="text-base font-black text-white tracking-widest uppercase">
                 Sellixa
               </h3>
               <span className="text-xs text-gray-400 font-medium italic">Made In Collaboration</span>
             </div>
-            <p className="text-sm text-gray-500 leading-relaxed max-w-sm mb-6">
+            <p className="text-sm text-gray-300 leading-relaxed max-w-sm mb-6">
               Sellixa helps coaches and teachers to offer their income through courses, ebooks, webinars, and growth
               speakers.
             </p>
             {/* Sellixa Social */}
             <div className="flex items-center gap-3">
               <Link
-                href="#sellixa-instagram"
-                className="w-9 h-9 rounded-full border border-gray-200 flex items-center justify-center text-gray-500 hover:text-black hover:border-black transition-all duration-200 hover:scale-110"
+                href="https://www.instagram.com/sellixa._hq/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-9 h-9 rounded-full border border-gray-500 flex items-center justify-center text-gray-400 hover:text-white hover:border-white transition-all duration-200 hover:scale-110"
                 aria-label="Sellixa Instagram"
               >
                 {socialIcons.instagram}
@@ -88,7 +101,7 @@ export default function Footer() {
       </div>
 
       {/* Bottom Bar */}
-      <div className="border-t border-gray-100">
+      <div className="relative z-10 border-t border-white/10 bg-black/40 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-xs text-gray-400">
             Copyright © 2025 Appvision, Inc. All rights reserved.
@@ -99,7 +112,7 @@ export default function Footer() {
                 <Link
                   key={item}
                   href={`#${item.toLowerCase().replace(/\s/g, "-")}`}
-                  className="text-xs text-gray-400 hover:text-black transition-colors"
+                  className="text-xs text-gray-400 hover:text-white transition-colors"
                 >
                   {item}
                 </Link>
