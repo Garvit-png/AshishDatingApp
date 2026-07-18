@@ -1,72 +1,46 @@
 import Image from "next/image";
 import Link from "next/link";
-import LineWaves from "./LineWaves";
+import Silk from "./Silk";
 
 export default function HeroSection() {
   return (
     <section className="relative min-h-screen bg-black overflow-hidden flex items-center pt-16">
       {/* Background Animation */}
-      <div className="absolute inset-0 z-0 opacity-80">
-        <LineWaves
-          speed={0.3}
-          innerLineCount={16}
-          outerLineCount={18}
-          warpIntensity={1.0}
-          rotation={-45}
-          edgeFadeWidth={0.0}
-          colorCycleSpeed={1.0}
-          brightness={0.8}
-          color1="#ff0000"
-          color2="#ff3333"
-          color3="#cc0000"
-          enableMouseInteraction={true}
-          mouseInfluence={2.0}
+      <div className="absolute inset-0 z-0 opacity-100">
+        <Silk
+          speed={5}
+          scale={1}
+          color="#ff0000"
+          noiseIntensity={1.5}
+          rotation={0}
         />
       </div>
 
       {/* Subtle background glow */}
       <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-black/50 to-transparent z-0 pointer-events-none" />
 
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full py-20">
-        <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
+      <div className="relative z-10 w-full px-4 sm:px-8 lg:px-12 py-20">
+        <div className="flex flex-col lg:flex-row items-center justify-between gap-12 lg:gap-16">
 
           {/* LEFT — Text Content */}
-          <div className="flex-1 max-w-2xl">
-            {/* Social Proof Badge */}
-            <div className="inline-flex items-center gap-2 bg-white/5 backdrop-blur-sm border border-white/10 rounded-full px-4 py-2 mb-8 animate-fade-in">
-              <span className="text-xs font-light text-white tracking-wide">
-                Helped And Guided Over
-              </span>
-              <span className="text-sm font-semibold text-[#7f0000]">1L+</span>
-              <span className="text-xs font-light text-white">peoples</span>
-              <div className="flex -space-x-2">
-                {["😊", "🙂", "😄"].map((emoji, i) => (
-                  <div
-                    key={i}
-                    className="w-6 h-6 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-xs opacity-80"
-                  >
-                    {emoji}
-                  </div>
-                ))}
-              </div>
-            </div>
+          <div className="flex-1 w-full flex flex-col items-start text-left">
 
             {/* Main Headline */}
-            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-light text-white leading-tight mb-6 tracking-wide">
+            <h1 className="text-[10vw] sm:text-[8vw] lg:text-[5.5vw] font-black text-white leading-[1.1] mb-6 tracking-tighter w-full whitespace-nowrap flex flex-col gap-4">
               <span className="block opacity-0 animate-slide-up" style={{ animationDelay: "0.1s", animationFillMode: "forwards" }}>
-                Attract <span className="font-bold text-[#ff1a1a] animate-text-glow">Better.</span>
+                Attract <span className="text-[#ff1a1a] animate-text-glow">Better.</span>
               </span>
               <span className="block opacity-0 animate-slide-up" style={{ animationDelay: "0.2s", animationFillMode: "forwards" }}>
-                Date <span className="font-bold text-[#ff1a1a] animate-text-glow">Smarter.</span>
+                Date <span className="text-[#ff1a1a] animate-text-glow">Smarter.</span>
               </span>
               <span className="block opacity-0 animate-slide-up" style={{ animationDelay: "0.3s", animationFillMode: "forwards" }}>
-                Build Lasting <span className="font-medium text-white">Love.</span>
+                Build Lasting <span className="text-white">Love.</span>
               </span>
             </h1>
 
             {/* Subtitle */}
             <p
-              className="text-gray-400 font-light text-base sm:text-lg mb-10 max-w-md leading-relaxed opacity-0 animate-slide-up"
+              className="text-gray-300 font-light text-lg sm:text-xl mb-10 max-w-xl leading-relaxed opacity-0 animate-slide-up"
               style={{ animationDelay: "0.45s", animationFillMode: "forwards" }}
             >
               Join thousands of learners and take your career to the next level with our expert-led courses.
@@ -76,7 +50,7 @@ export default function HeroSection() {
             <div className="opacity-0 animate-slide-up" style={{ animationDelay: "0.55s", animationFillMode: "forwards" }}>
               <Link
                 href="#courses"
-                className="inline-flex items-center gap-2 bg-white/10 text-white font-medium px-8 py-4 rounded-full text-sm hover:bg-[#7f0000] hover:text-white hover:border-[#7f0000] transition-all duration-300 hover:scale-105 active:scale-95 border border-white/20"
+                className="inline-flex items-center gap-2 bg-white/10 text-white font-medium px-8 py-4 rounded-full text-sm hover:bg-black hover:text-white hover:border-black transition-all duration-300 hover:scale-105 active:scale-95 border border-white/20"
               >
                 Start Learning Now
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -116,6 +90,9 @@ export default function HeroSection() {
         <div className="w-0.5 h-8 bg-white/30 rounded-full" />
         <div className="w-1.5 h-1.5 rounded-full bg-white/50" />
       </div>
+
+      {/* Bottom fade-to-black transition */}
+      <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-b from-transparent to-black z-10 pointer-events-none" />
     </section>
   );
 }

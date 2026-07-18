@@ -1,6 +1,7 @@
 import Navbar from "@/components/Navbar";
 import IntroVideoSection from "@/components/IntroVideoSection";
 import EyeRollSection from "@/components/EyeRollSection";
+import StatsVideoSection from "@/components/StatsVideoSection";
 import HeroSection from "@/components/HeroSection";
 import StatsSection from "@/components/StatsSection";
 import DateSmarterSection from "@/components/DateSmarterSection";
@@ -16,6 +17,7 @@ export default function HomePage() {
         <IntroVideoSection />
         <EyeRollSection />
         <HeroSection />
+        <StatsVideoSection />
         <StatsSection />
         <DateSmarterSection />
         <CTABanner />

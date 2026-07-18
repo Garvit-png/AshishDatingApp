@@ -15,9 +15,7 @@ export default function Navbar() {
 
   return (
     <nav
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        isScrolled ? "bg-black/80 backdrop-blur-md shadow-md shadow-black/40" : "bg-transparent"
-      }`}
+      className="fixed top-0 left-0 right-0 z-50 transition-all duration-300 bg-transparent"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
@@ -32,14 +30,14 @@ export default function Navbar() {
           <div className="hidden md:flex items-center gap-8">
             <Link
               href="#playbooks"
-              className="text-base font-medium text-gray-400 hover:text-white transition-colors duration-200 relative group"
+              className="text-base font-medium text-white transition-colors duration-200 relative group"
             >
               Get Playbooks
               <span className="absolute -bottom-0.5 left-0 w-0 h-0.5 bg-[#7f0000] group-hover:w-full transition-all duration-300" />
             </Link>
             <Link
               href="#testimonials"
-              className="text-base font-medium text-gray-400 hover:text-white transition-colors duration-200 relative group"
+              className="text-base font-medium text-white transition-colors duration-200 relative group"
             >
               Testimonials
               <span className="absolute -bottom-0.5 left-0 w-0 h-0.5 bg-[#7f0000] group-hover:w-full transition-all duration-300" />
@@ -80,10 +78,10 @@ export default function Navbar() {
         className={`md:hidden overflow-hidden transition-all duration-300 ${menuOpen ? "max-h-64 border-t border-white/10" : "max-h-0"}`}
       >
         <div className="px-6 py-4 flex flex-col gap-4 bg-black">
-          <Link href="#playbooks" className="text-base font-medium text-gray-400 hover:text-white" onClick={() => setMenuOpen(false)}>
+          <Link href="#playbooks" className="text-base font-medium text-white" onClick={() => setMenuOpen(false)}>
             Get Playbooks
           </Link>
-          <Link href="#testimonials" className="text-base font-medium text-gray-400 hover:text-white" onClick={() => setMenuOpen(false)}>
+          <Link href="#testimonials" className="text-base font-medium text-white" onClick={() => setMenuOpen(false)}>
             Testimonials
           </Link>
           <Link

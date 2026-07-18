@@ -42,8 +42,8 @@ export default function EyeRollSection() {
         {/* BIG RED BACKGROUND TEXT */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none z-0">
           <span
-            className="font-black uppercase text-[#ff2222] leading-none tracking-tighter whitespace-nowrap"
-            style={{ fontSize: "18vw", opacity: 0.15 + progress * 0.1 }}
+            className="font-black uppercase text-[#ff0000] leading-none tracking-tighter whitespace-nowrap"
+            style={{ fontSize: "18vw", opacity: 0.80 + progress * 0.1 }}
           >
             DONT STOP
           </span>
