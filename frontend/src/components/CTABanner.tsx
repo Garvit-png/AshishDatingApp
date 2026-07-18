@@ -30,11 +30,11 @@ export default function CTABanner() {
       >
         <p className="text-xl sm:text-2xl font-bold text-black leading-snug mb-6">
           Sirf better pickup lines se kuch nahi hoga. Tumhe chahiye{" "}
-          <span className="text-red-500">ek better dating strategy.</span>
+          <span className="text-[#7f0000]">ek better dating strategy.</span>
         </p>
         <Link
           href="#courses"
-          className="inline-flex items-center gap-2 bg-black text-white font-semibold px-7 py-3 rounded-md text-sm hover:bg-gray-800 transition-all duration-200 hover:scale-105 active:scale-95"
+          className="inline-flex items-center gap-2 bg-black text-white font-semibold px-7 py-3 rounded-md text-sm hover:bg-[#7f0000] hover:text-white transition-all duration-200 hover:scale-105 active:scale-95"
         >
           Read More
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

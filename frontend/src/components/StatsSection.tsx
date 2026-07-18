@@ -6,22 +6,22 @@ const stats = [
   {
     value: "7 Years+",
     label: "EXPERIENCE",
-    color: "text-red-500",
+    color: "text-[#7f0000]",
   },
   {
     value: "161k+",
     label: "MEMBERS",
-    color: "text-red-500",
+    color: "text-[#7f0000]",
   },
   {
     value: "10+",
     label: "MASTER COURSES & EBOOKS",
-    color: "text-red-500",
+    color: "text-[#7f0000]",
   },
   {
     value: "4.8",
     label: "TRUSTPILOT RATING",
-    color: "text-red-500",
+    color: "text-[#7f0000]",
     isRating: true,
   },
 ];
@@ -58,7 +58,7 @@ export default function StatsSection() {
             >
               <div className="flex items-center gap-1 mb-1">
                 {stat.isRating && (
-                  <div className="flex text-red-500 text-sm mb-0.5">
+                  <div className="flex text-[#7f0000] text-sm mb-0.5">
                     {"★★★★★".split("").map((star, j) => (
                       <span key={j}>{star}</span>
                     ))}

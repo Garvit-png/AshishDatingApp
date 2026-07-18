@@ -11,7 +11,7 @@ const products = [
     subtitle: "50 Proven Lines",
     image: "/book-opener-vault.png",
     tag: "BESTSELLER",
-    tagColor: "bg-red-600",
+    tagColor: "bg-[#7f0000]",
     price: "₹299",
     href: "#opener-vault",
   },
@@ -32,7 +32,7 @@ const products = [
     subtitle: "Understand Female Attraction",
     image: "/book-girl-psychology.png",
     tag: "NEW",
-    tagColor: "bg-red-600",
+    tagColor: "bg-[#7f0000]",
     price: "₹299",
     href: "#girl-psychology",
   },
@@ -69,7 +69,7 @@ export default function CoursesSection() {
             visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
           }`}
         >
-          <p className="text-xs font-bold tracking-widest text-red-500 uppercase mb-3">
+          <p className="text-xs font-bold tracking-widest text-[#7f0000] uppercase mb-3">
             REAL DATING STRATEGY. REAL PSYCHOLOGY. ZERO CRINGE.
           </p>
           <h2 className="text-4xl sm:text-5xl font-black text-black mb-3">
@@ -121,7 +121,7 @@ export default function CoursesSection() {
                 <h3 className="text-sm font-bold text-black leading-tight">{product.title}</h3>
                 <p className="text-xs text-gray-500 mt-1">{product.subtitle}</p>
                 <div className="flex items-center justify-between mt-2">
-                  <span className="text-sm font-black text-red-500">{product.price}</span>
+                  <span className="text-sm font-black text-[#7f0000]">{product.price}</span>
                   <Link
                     href={product.href}
                     className="text-xs font-semibold bg-black text-white px-3 py-1.5 rounded-md hover:bg-gray-800 transition-colors"

@@ -48,7 +48,7 @@ export default function DateSmarterSection() {
         >
           {/* YouTube embed placeholder */}
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-gray-800 to-black">
-            <div className="w-20 h-20 rounded-full bg-red-600 flex items-center justify-center cursor-pointer hover:bg-red-500 transition-colors duration-200 shadow-2xl shadow-red-900/50 hover:scale-110 transition-transform">
+            <div className="w-20 h-20 rounded-full bg-[#7f0000] flex items-center justify-center cursor-pointer hover:bg-[#7f0000] transition-colors duration-200 shadow-2xl shadow-[#7f0000]/50 hover:scale-110 transition-transform">
               <svg
                 className="w-8 h-8 text-white ml-1"
                 fill="currentColor"

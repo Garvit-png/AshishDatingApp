@@ -1,4 +1,6 @@
 import Navbar from "@/components/Navbar";
+import IntroVideoSection from "@/components/IntroVideoSection";
+import EyeRollSection from "@/components/EyeRollSection";
 import HeroSection from "@/components/HeroSection";
 import StatsSection from "@/components/StatsSection";
 import DateSmarterSection from "@/components/DateSmarterSection";
@@ -11,6 +13,8 @@ export default function HomePage() {
     <>
       <Navbar />
       <main>
+        <IntroVideoSection />
+        <EyeRollSection />
         <HeroSection />
         <StatsSection />
         <DateSmarterSection />
