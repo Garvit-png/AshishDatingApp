@@ -1,40 +1,44 @@
 "use client";
 
+import { useIsMobile } from "@/hooks/useIsMobile";
+
 export default function IntroVideoSection() {
+  const isMobile = useIsMobile();
+
   return (
     <section
       className="relative w-full h-screen overflow-hidden bg-black flex flex-col items-center justify-center"
       style={{ contain: "layout style paint", isolation: "isolate" }}
     >
       
-      {/* Background Video (Rotated 90deg to landscape) */}
-      <div
-        className="absolute inset-0 pointer-events-none z-0"
-        style={{
-          contain: "strict",
-          isolation: "isolate",
-        }}
-      >
-        <video 
-          autoPlay 
-          muted 
-          loop 
-          playsInline
-          preload="auto"
-          className="absolute top-1/2 left-1/2 object-cover"
-          style={{
-            width: "100vh",
-            height: "100vw",
-            transform: "translate(-50%, -50%) rotate(90deg) translateZ(0)",
-            willChange: "transform",
-            backfaceVisibility: "hidden",
-          }}
+      {/* Background — Video on desktop, gradient on mobile */}
+      {!isMobile ? (
+        <div
+          className="absolute inset-0 pointer-events-none z-0"
+          style={{ contain: "strict", isolation: "isolate" }}
         >
-          <source src="/shuru.mp4" type="video/mp4" />
-        </video>
-        {/* Dark overlay for readability */}
-        <div className="absolute inset-0 bg-black/60 z-10" />
-      </div>
+          <video 
+            autoPlay 
+            muted 
+            loop 
+            playsInline
+            preload="auto"
+            className="absolute top-1/2 left-1/2 object-cover"
+            style={{
+              width: "100vh",
+              height: "100vw",
+              transform: "translate(-50%, -50%) rotate(90deg) translateZ(0)",
+              willChange: "transform",
+              backfaceVisibility: "hidden",
+            }}
+          >
+            <source src="/shuru.mp4" type="video/mp4" />
+          </video>
+          <div className="absolute inset-0 bg-black/60 z-10" />
+        </div>
+      ) : (
+        <div className="absolute inset-0 z-0 bg-gradient-to-br from-[#1a0000] via-black to-[#0d0000]" />
+      )}
 
       {/* Main Content */}
       <div className="relative z-20 text-center w-full flex flex-col items-center justify-center h-full pt-16 px-2 md:px-6">
@@ -62,5 +66,3 @@ export default function IntroVideoSection() {
     </section>
   );
 }
-
-

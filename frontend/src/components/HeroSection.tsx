@@ -1,20 +1,31 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
-import Silk from "./Silk";
+import { useIsMobile } from "@/hooks/useIsMobile";
+import dynamic from "next/dynamic";
+
+const Silk = dynamic(() => import("./Silk"), { ssr: false });
 
 export default function HeroSection() {
+  const isMobile = useIsMobile();
+
   return (
     <section className="relative min-h-screen bg-black overflow-hidden flex items-center pt-16">
-      {/* Background Animation */}
-      <div className="absolute inset-0 z-0 opacity-100">
-        <Silk
-          speed={5}
-          scale={1}
-          color="#ff0000"
-          noiseIntensity={1.5}
-          rotation={0}
-        />
-      </div>
+      {/* Background — Silk on desktop, simple gradient on mobile */}
+      {!isMobile ? (
+        <div className="absolute inset-0 z-0 opacity-100">
+          <Silk
+            speed={5}
+            scale={1}
+            color="#ff0000"
+            noiseIntensity={1.5}
+            rotation={0}
+          />
+        </div>
+      ) : (
+        <div className="absolute inset-0 z-0 bg-gradient-to-br from-[#1a0000] via-black to-[#0a0000]" />
+      )}
 
       {/* Subtle background glow */}
       <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-black/50 to-transparent z-0 pointer-events-none" />

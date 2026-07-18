@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useIsMobile } from "@/hooks/useIsMobile";
 
 const socialIcons = {
   instagram: (
@@ -28,21 +31,30 @@ const socialIcons = {
   ),
 };
 
+
+
 export default function Footer() {
+  const isMobile = useIsMobile();
+
   return (
     <footer className="relative border-t border-white/10 overflow-hidden">
-      {/* Video Background */}
-      <video
-        src="/ghoda.mp4"
-        autoPlay
-        muted
-        loop
-        playsInline
-        preload="none"
-        className="absolute inset-0 w-full h-full object-cover z-0"
-      />
-      {/* Overlay for readability */}
-      <div className="absolute inset-0 bg-black/60 z-0" />
+      {/* Background — Video on desktop, dark bg on mobile */}
+      {!isMobile ? (
+        <>
+          <video
+            src="/ghoda.mp4"
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="none"
+            className="absolute inset-0 w-full h-full object-cover z-0"
+          />
+          <div className="absolute inset-0 bg-black/60 z-0" />
+        </>
+      ) : (
+        <div className="absolute inset-0 bg-gradient-to-b from-[#111] to-black z-0" />
+      )}
 
       {/* Main Footer */}
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
