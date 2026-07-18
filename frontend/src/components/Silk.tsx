@@ -3,7 +3,7 @@
 
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { forwardRef, useRef, useMemo, useLayoutEffect } from 'react';
-import { Color } from 'three';
+import { Color, Mesh } from 'three';
 
 const hexToNormalizedRGB = (hex: string) => {
   hex = hex.replace('#', '');
@@ -104,7 +104,7 @@ interface SilkProps {
 }
 
 const Silk = ({ speed = 5, scale = 1, color = '#7B7481', noiseIntensity = 1.5, rotation = 0 }: SilkProps) => {
-  const meshRef = useRef();
+  const meshRef = useRef<Mesh>(null);
 
   const uniforms = useMemo(
     () => ({
