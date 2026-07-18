@@ -31,7 +31,7 @@ export default function EyeRollSection() {
       const p = Math.max(0, Math.min(1, scrolled / scrollable));
 
       const scale = 0.2 + p * 0.65;
-      image.style.transform = `scale(${scale})`;
+      image.style.transform = `scale(${scale}) translateZ(0)`;
       text.style.opacity = `${0.80 + p * 0.1}`;
       indicator.style.opacity = `${1 - p * 3}`;
     });
@@ -72,7 +72,7 @@ export default function EyeRollSection() {
             maxWidth: "700px",
           }}
         >
-          <div className="relative overflow-hidden rounded-2xl shadow-2xl shadow-[#ff1a1a]/30">
+          <div className="relative overflow-hidden rounded-2xl">
             <Image
               src="/eyeroll.webp"
               alt="Eye Roll"

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useCallback } from "react";
 import { useIsMobile } from "@/hooks/useIsMobile";
+import LazyVideo from "./LazyVideo";
 
 const stats = [
   { value: "4.9★", label: "Average Rating" },
@@ -34,14 +35,13 @@ export default function StatsVideoSection() {
       const p = Math.min(Math.max(scrolled / total, 0), 1);
 
       const videoScale = 0.4 + p * 0.45;
-      const borderRadius = Math.max(24 - p * 16, 8);
       const statsOpacity = Math.min(Math.max((p - 0.5) / 0.25, 0), 1);
       const statsVisible = p >= 0.5;
 
-      videoWrapper.style.transform = `scale(${videoScale})`;
-      videoWrapper.style.borderRadius = `${borderRadius}px`;
+      // GPU accelerated properties only (transform and opacity)
+      videoWrapper.style.transform = `scale(${videoScale}) translateZ(0)`;
       statsOverlay.style.opacity = `${statsOpacity}`;
-      statsOverlay.style.transform = `translateY(${statsVisible ? 0 : 20}px)`;
+      statsOverlay.style.transform = `translateY(${statsVisible ? 0 : 20}px) translateZ(0)`;
     });
   }, []);
 
@@ -71,19 +71,20 @@ export default function StatsVideoSection() {
             borderRadius: "24px",
             overflow: "hidden",
             willChange: "transform",
-            boxShadow: "0 32px 80px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.08)",
+            // Removed heavy box-shadow that causes repaints during scale
           }}
         >
+          {/* Brightness Overlay (Hardware Accelerated instead of CSS filter on video) */}
+          <div className="absolute inset-0 bg-white/10 z-10 pointer-events-none mix-blend-overlay" />
+          
           {/* Video */}
-          <video
+          <LazyVideo
             src="/stats.mp4"
             autoPlay
             muted
             loop
             playsInline
-            preload="none"
             className="w-full h-full object-cover"
-            style={{ filter: "brightness(1.3)" }}
           />
 
           {/* Stats overlaid on video */}

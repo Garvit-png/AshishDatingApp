@@ -12,9 +12,12 @@ const StatsVideoSection = dynamic(() => import("@/components/StatsVideoSection")
 const StatsSection = dynamic(() => import("@/components/StatsSection"), { ssr: false });
 const CoursesSection = dynamic(() => import("@/components/CoursesSection"), { ssr: false });
 
+import GlobalLoader from "@/components/GlobalLoader";
+
 export default function HomePage() {
   return (
     <>
+      <GlobalLoader />
       <Navbar />
       <main>
         <IntroVideoSection />

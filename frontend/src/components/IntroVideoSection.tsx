@@ -1,9 +1,8 @@
 "use client";
 
-import { useIsMobile } from "@/hooks/useIsMobile";
+import LazyVideo from "./LazyVideo";
 
 export default function IntroVideoSection() {
-  const isMobile = useIsMobile();
 
   return (
     <section
@@ -11,41 +10,29 @@ export default function IntroVideoSection() {
       style={{ contain: "layout style paint", isolation: "isolate" }}
     >
       
-      {/* Background — Video on desktop, gradient on mobile */}
-      {isMobile ? (
-        <div className="absolute inset-0 z-0">
-          <div className="absolute inset-0 bg-gradient-to-br from-[#1a0000] via-black to-[#0a0000]" />
-          <div className="absolute inset-0 opacity-30"
-            style={{
-              background: "radial-gradient(ellipse at 50% 40%, #ff0000 0%, transparent 60%)",
-            }}
-          />
-        </div>
-      ) : (
-        <div
-          className="absolute inset-0 pointer-events-none z-0"
-          style={{ contain: "strict", isolation: "isolate" }}
+      {/* Background — Video everywhere */}
+      <div
+        className="absolute inset-0 pointer-events-none z-0"
+        style={{ contain: "strict", isolation: "isolate" }}
+      >
+        <LazyVideo 
+          autoPlay 
+          muted 
+          loop 
+          playsInline
+          className="absolute top-1/2 left-1/2 object-cover"
+          style={{
+            width: "100vh",
+            height: "100vw",
+            transform: "translate(-50%, -50%) rotate(90deg) translateZ(0)",
+            willChange: "transform",
+            backfaceVisibility: "hidden",
+          }}
         >
-          <video 
-            autoPlay 
-            muted 
-            loop 
-            playsInline
-            preload="auto"
-            className="absolute top-1/2 left-1/2 object-cover"
-            style={{
-              width: "100vh",
-              height: "100vw",
-              transform: "translate(-50%, -50%) rotate(90deg) translateZ(0)",
-              willChange: "transform",
-              backfaceVisibility: "hidden",
-            }}
-          >
-            <source src="/shuru.mp4" type="video/mp4" />
-          </video>
-          <div className="absolute inset-0 bg-black/60 z-10" />
-        </div>
-      )}
+          <source src="/shuru.mp4" type="video/mp4" />
+        </LazyVideo>
+        <div className="absolute inset-0 bg-black/60 z-10" />
+      </div>
 
       {/* Main Content */}
       <div className="relative z-20 text-center w-full flex flex-col items-center justify-center h-full pt-16 px-4 md:px-6">

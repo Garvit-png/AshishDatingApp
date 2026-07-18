@@ -1,3 +1,5 @@
+import LazyVideo from "./LazyVideo";
+
 export default function StatsSection() {
   return (
     <section
@@ -40,13 +42,12 @@ export default function StatsSection() {
           className="relative w-full rounded-2xl overflow-hidden shadow-2xl shadow-black/40"
           style={{ maxWidth: 760, aspectRatio: "16/9" }}
         >
-          <video
+          <LazyVideo
             src="/stats.mp4"
             autoPlay
             muted
             loop
             playsInline
-            preload="none"
             className="w-full h-full object-cover"
           />
           <div className="absolute inset-0 rounded-2xl ring-1 ring-black/20 pointer-events-none" />

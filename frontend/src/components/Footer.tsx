@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useIsMobile } from "@/hooks/useIsMobile";
+import LazyVideo from "./LazyVideo";
 
 const instagramIcon = (
   <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
@@ -10,27 +10,19 @@ const instagramIcon = (
 );
 
 export default function Footer() {
-  const isMobile = useIsMobile();
 
   return (
     <footer className="relative border-t border-white/10 overflow-hidden">
-      {/* Background — Video on desktop, gradient on mobile */}
-      {isMobile ? (
-        <div className="absolute inset-0 bg-gradient-to-br from-[#111] via-[#0a0a0a] to-black z-0" />
-      ) : (
-        <>
-          <video
-            src="/ghoda.mp4"
-            autoPlay
-            muted
-            loop
-            playsInline
-            preload="none"
-            className="absolute inset-0 w-full h-full object-cover z-0"
-          />
-          <div className="absolute inset-0 bg-black/60 z-0" />
-        </>
-      )}
+      {/* Background — Video everywhere */}
+      <LazyVideo
+        src="/ghoda.mp4"
+        autoPlay
+        muted
+        loop
+        playsInline
+        className="absolute inset-0 w-full h-full object-cover z-0"
+      />
+      <div className="absolute inset-0 bg-black/60 z-0" />
 
       {/* Main Footer */}
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
