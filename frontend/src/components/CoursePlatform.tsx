@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import Link from "next/link";
+import CoursesLoader from "@/components/CoursesLoader";
+import CoursesHero from "@/components/CoursesHero";
 
 // ─── Mock Data ───────────────────────────────────────────────
 const allCourses = [
@@ -77,6 +79,17 @@ export default function CoursePlatform() {
   const [expandedModule, setExpandedModule] = useState<string>("");
   const [activeVideoId, setActiveVideoId] = useState<string>("");
   const [paymentStatus, setPaymentStatus] = useState<"idle" | "processing" | "success">("idle");
+  const [loading, setLoading] = useState(true);
+
+  const coursesGridRef = useRef<HTMLDivElement>(null);
+
+  const handleLoaderComplete = useCallback(() => {
+    setLoading(false);
+  }, []);
+
+  const scrollToCourses = useCallback(() => {
+    coursesGridRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, []);
 
   const openCourse = (courseId: string) => {
     const course = allCourses.find(c => c.id === courseId);
@@ -106,6 +119,15 @@ export default function CoursePlatform() {
   if (view === "list") {
     return (
       <div className="min-h-screen bg-black text-white">
+        {/* Loading overlay — mounts on top of everything */}
+        {loading && <CoursesLoader onComplete={handleLoaderComplete} />}
+
+        {/* Hero section */}
+        <CoursesHero onScrollToCourses={scrollToCourses} />
+
+        {/* Scroll target anchor for "Explore All Courses" CTA */}
+        <div ref={coursesGridRef} />
+
         {/* Header */}
         <div className="border-b border-[#222]">
           <div className="max-w-6xl mx-auto px-6 py-6 flex justify-between items-center">
