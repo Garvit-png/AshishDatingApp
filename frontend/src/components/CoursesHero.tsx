@@ -282,6 +282,7 @@ export default function CoursesHero({ onScrollToCourses }: { onScrollToCourses: 
               style={{
                 userSelect: "none",
                 WebkitUserDrag: "none",
+                borderRadius: "24px",
                 filter: "drop-shadow(0 0 32px rgba(0,0,0,0.8)) drop-shadow(0 0 64px rgba(0,0,0,0.5))",
               } as React.CSSProperties}
               draggable={false}
