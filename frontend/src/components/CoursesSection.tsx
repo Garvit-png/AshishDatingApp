@@ -128,7 +128,7 @@ export default function CoursesSection() {
           }`}
         >
           <Link
-            href="#all-products"
+            href="/courses"
             className="inline-flex items-center gap-2 border-2 border-white text-white font-bold px-8 py-3 rounded-full text-sm hover:bg-white hover:text-black transition-all duration-200"
           >
             View All Courses &amp; Playbooks
