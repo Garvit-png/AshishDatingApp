@@ -54,10 +54,16 @@ export default function EyeRollSection() {
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none z-0">
           <span
             ref={textRef}
-            className="font-black uppercase text-[#ff0000] leading-none tracking-tighter whitespace-nowrap"
-            style={{ fontSize: isMobile ? "22vw" : "18vw", opacity: 0.8, willChange: "opacity" }}
+            className="font-black uppercase text-[#ff0000] leading-[0.9] tracking-tighter text-center"
+            style={{ fontSize: isMobile ? "28vw" : "18vw", opacity: 0.8, willChange: "opacity" }}
           >
-            DONT STOP
+            {isMobile ? (
+              <>
+                DONT<br />STOP
+              </>
+            ) : (
+              "DONT STOP"
+            )}
           </span>
         </div>
 
