@@ -21,6 +21,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${inter.variable} h-full antialiased`}>
+      <head>
+        <link rel="preload" href="/shuru.mp4" as="video" type="video/mp4" />
+      </head>
       <body className="min-h-full flex flex-col bg-white">{children}</body>
     </html>
   );

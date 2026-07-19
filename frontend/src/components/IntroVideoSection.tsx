@@ -1,8 +1,61 @@
 "use client";
 
-import LazyVideo from "./LazyVideo";
+import { useEffect, useRef } from "react";
+
 
 export default function IntroVideoSection() {
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    let isIntersecting = true;
+    let scrollTimeout: NodeJS.Timeout;
+
+    const playVideo = () => {
+      if (isIntersecting) {
+        video.play().catch(() => {});
+      }
+    };
+
+    const pauseVideo = () => {
+      video.pause();
+    };
+
+    // Pause when out of view
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        isIntersecting = entry.isIntersecting;
+        if (isIntersecting) {
+          playVideo();
+        } else {
+          pauseVideo();
+        }
+      });
+    }, { rootMargin: "0px" });
+
+    observer.observe(video);
+
+    // Pause while scrolling
+    const onScroll = () => {
+      if (!isIntersecting) return;
+      pauseVideo();
+      
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(() => {
+        playVideo();
+      }, 150);
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("scroll", onScroll);
+      clearTimeout(scrollTimeout);
+    };
+  }, []);
 
   return (
     <section
@@ -15,12 +68,13 @@ export default function IntroVideoSection() {
         className="absolute inset-0 pointer-events-none z-0"
         style={{ contain: "strict", isolation: "isolate" }}
       >
-        <LazyVideo 
+        <video 
+          ref={videoRef}
           autoPlay 
           muted 
           loop 
           playsInline
-          pauseOnScroll={true}
+          preload="auto"
           className="absolute top-1/2 left-1/2 object-cover"
           style={{
             width: "100vh",
@@ -31,7 +85,7 @@ export default function IntroVideoSection() {
           }}
         >
           <source src="/shuru.mp4" type="video/mp4" />
-        </LazyVideo>
+        </video>
         <div className="absolute inset-0 bg-black/60 z-10" />
       </div>
 

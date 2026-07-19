@@ -17,7 +17,27 @@ export default function StatsVideoSection() {
   const videoWrapperRef = useRef<HTMLDivElement>(null);
   const statsOverlayRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number>(0);
+  const layoutRef = useRef({ offsetTop: 0, height: 0, windowH: 0 });
 
+  useEffect(() => {
+    const updateLayout = () => {
+      if (sectionRef.current) {
+        layoutRef.current = {
+          offsetTop: sectionRef.current.offsetTop,
+          height: sectionRef.current.offsetHeight,
+          windowH: window.innerHeight,
+        };
+      }
+    };
+    
+    // Slight delay to ensure DOM is fully laid out
+    const timeout = setTimeout(updateLayout, 100);
+    window.addEventListener("resize", updateLayout);
+    return () => {
+      clearTimeout(timeout);
+      window.removeEventListener("resize", updateLayout);
+    };
+  }, []);
   const onScroll = useCallback(() => {
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
 
@@ -27,11 +47,11 @@ export default function StatsVideoSection() {
       const statsOverlay = statsOverlayRef.current;
       if (!section || !videoWrapper || !statsOverlay) return;
 
-      const rect = section.getBoundingClientRect();
-      const sectionHeight = section.offsetHeight;
-      const windowHeight = window.innerHeight;
-      const scrolled = -rect.top;
-      const total = sectionHeight - windowHeight;
+      const { offsetTop, height, windowH } = layoutRef.current;
+      if (height === 0) return;
+
+      const scrolled = window.scrollY - offsetTop;
+      const total = height - windowH;
       const p = Math.min(Math.max(scrolled / total, 0), 1);
 
       const videoScale = 0.4 + p * 0.45;

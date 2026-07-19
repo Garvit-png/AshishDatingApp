@@ -11,7 +11,27 @@ export default function EyeRollSection() {
   const textRef = useRef<HTMLSpanElement>(null);
   const indicatorRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number>(0);
+  const layoutRef = useRef({ offsetTop: 0, height: 0, windowH: 0 });
 
+  useEffect(() => {
+    const updateLayout = () => {
+      if (containerRef.current) {
+        layoutRef.current = {
+          offsetTop: containerRef.current.offsetTop,
+          height: containerRef.current.offsetHeight,
+          windowH: window.innerHeight,
+        };
+      }
+    };
+    
+    // Slight delay to ensure DOM is fully laid out
+    const timeout = setTimeout(updateLayout, 100);
+    window.addEventListener("resize", updateLayout);
+    return () => {
+      clearTimeout(timeout);
+      window.removeEventListener("resize", updateLayout);
+    };
+  }, []);
   const onScroll = useCallback(() => {
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
 
@@ -22,12 +42,11 @@ export default function EyeRollSection() {
       const indicator = indicatorRef.current;
       if (!container || !image || !text || !indicator) return;
 
-      const rect = container.getBoundingClientRect();
-      const containerH = container.offsetHeight;
-      const windowH = window.innerHeight;
+      const { offsetTop, height, windowH } = layoutRef.current;
+      if (height === 0) return; // Not initialized yet
 
-      const scrolled = -rect.top;
-      const scrollable = containerH - windowH;
+      const scrolled = window.scrollY - offsetTop;
+      const scrollable = height - windowH;
       const p = Math.max(0, Math.min(1, scrolled / scrollable));
 
       const scale = 0.2 + p * 0.65;
