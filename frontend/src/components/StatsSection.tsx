@@ -58,7 +58,10 @@ export default function StatsSection() {
           <h3 className="text-2xl sm:text-3xl lg:text-4xl font-black text-black text-center max-w-3xl leading-tight">
             Only Pickup Lines aren&apos;t gonna work. You deserve something better.
           </h3>
-          <button className="bg-black text-white px-10 py-4 rounded-full font-bold text-lg hover:bg-gray-900 transition-all hover:scale-105 active:scale-95 shadow-2xl shadow-black/20">
+          <button
+            onClick={() => document.getElementById("playbooks")?.scrollIntoView({ behavior: "smooth", block: "start" })}
+            className="bg-black text-white px-10 py-4 rounded-full font-bold text-lg hover:bg-gray-900 transition-all hover:scale-105 active:scale-95 shadow-2xl shadow-black/20"
+          >
             Shop Now
           </button>
         </div>

@@ -62,7 +62,7 @@ export default function HeroSection() {
             {/* CTA Button */}
             <div className="opacity-0 animate-slide-up" style={{ animationDelay: "0.55s", animationFillMode: "forwards" }}>
               <Link
-                href="#courses"
+                href="#playbooks"
                 className="inline-flex items-center gap-2 bg-white/10 text-white font-medium px-6 py-3 md:px-8 md:py-4 rounded-full text-sm hover:bg-black hover:text-white hover:border-black transition-all duration-300 hover:scale-105 active:scale-95 border border-white/20"
               >
                 Start Learning Now
