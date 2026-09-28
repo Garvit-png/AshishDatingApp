@@ -97,6 +97,20 @@ export default function Footer() {
                 </Link>
               )
             )}
+            <Link
+              href="/admin"
+              className="group flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-white/10 hover:border-white/25 bg-white/5 hover:bg-white/10 transition-all duration-200"
+              aria-label="Admin"
+              title="Admin Panel"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3 text-gray-500 group-hover:text-gray-300 transition-colors">
+                <circle cx="12" cy="8" r="4" />
+                <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
+              </svg>
+              <span className="text-[10px] text-gray-500 group-hover:text-gray-300 font-medium tracking-wider transition-colors">
+                ADMIN
+              </span>
+            </Link>
           </div>
         </div>
       </div>

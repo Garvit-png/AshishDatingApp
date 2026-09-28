@@ -1,0 +1,58 @@
+[
+  {
+    "id": 1,
+    "title": "Opener Vault",
+    "subtitle": "50 Proven Openers",
+    "image": "/opener_vault.png",
+    "tag": "BESTSELLER",
+    "tagColor": "bg-[#7f0000]",
+    "price": "₹299",
+    "href": "https://rzp.io/rzp/opener-vault",
+    "hidden": false
+  },
+  {
+    "id": 2,
+    "title": "The Approach Blueprint",
+    "subtitle": "How To Talk To Women Without Being Creepy",
+    "image": "/approach_psycho.png",
+    "tag": "POPULAR",
+    "tagColor": "bg-white",
+    "price": "₹499",
+    "href": "https://rzp.io/rzp/the-approach-blueprint",
+    "hidden": false,
+    "featured": true
+  },
+  {
+    "id": 3,
+    "title": "The Girl Psychology Playbook",
+    "subtitle": "Understand Female Attraction",
+    "image": "/girl.png",
+    "tag": "NEW",
+    "tagColor": "bg-[#7f0000]",
+    "price": "₹299",
+    "href": "https://rzp.io/rzp/girl-psychology-playbook",
+    "hidden": false
+  },
+  {
+    "id": 4,
+    "title": "Approach to Intimacy",
+    "subtitle": "Build Deep, Real Connections",
+    "image": "/approach_intimacy.png",
+    "tag": "NEW",
+    "tagColor": "bg-[#7f0000]",
+    "price": "₹299",
+    "href": "https://rzp.io/rzp/approach-to-intimacy",
+    "hidden": false
+  },
+  {
+    "id": 5,
+    "title": "How To Talk To A Girl",
+    "subtitle": "Conversations That Create Attraction",
+    "image": "/how to talk to girl.png",
+    "tag": "NEW",
+    "tagColor": "bg-[#7f0000]",
+    "price": "₹299",
+    "href": "https://rzp.io/rzp/How-to-talk-to-a-girl",
+    "hidden": false
+  }
+]

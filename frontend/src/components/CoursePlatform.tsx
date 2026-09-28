@@ -5,61 +5,23 @@ import Link from "next/link";
 import Image from "next/image";
 import CoursesLoader from "@/components/CoursesLoader";
 import CoursesHero from "@/components/CoursesHero";
+import booksData from "@/data/books.json";
 
-// ─── Real Products ────────────────────────────────────────────
-const products = [
-  {
-    id: 1,
-    title: "Opener Vault",
-    subtitle: "50 Proven Openers",
-    image: "/opener_vault.png",
-    tag: "BESTSELLER",
-    tagColor: "bg-[#7f0000]",
-    price: "₹299",
-    href: "https://rzp.io/rzp/opener-vault",
-  },
-  {
-    id: 2,
-    title: "The Approach Blueprint",
-    subtitle: "How To Talk To Women Without Being Creepy",
-    image: "/approach_psycho.png",
-    tag: "POPULAR",
-    tagColor: "bg-white",
-    price: "₹499",
-    href: "https://rzp.io/rzp/the-approach-blueprint",
-    featured: true,
-  },
-  {
-    id: 3,
-    title: "The Girl Psychology Playbook",
-    subtitle: "Understand Female Attraction",
-    image: "/girl.png",
-    tag: "NEW",
-    tagColor: "bg-[#7f0000]",
-    price: "₹299",
-    href: "https://rzp.io/rzp/girl-psychology-playbook",
-  },
-  {
-    id: 4,
-    title: "Approach to Intimacy",
-    subtitle: "Build Deep, Real Connections",
-    image: "/approach_intimacy.png",
-    tag: "NEW",
-    tagColor: "bg-[#7f0000]",
-    price: "₹299",
-    href: "https://rzp.io/rzp/approach-to-intimacy",
-  },
-  {
-    id: 5,
-    title: "How To Talk To A Girl",
-    subtitle: "Conversations That Create Attraction",
-    image: "/how to talk to girl.png",
-    tag: "NEW",
-    tagColor: "bg-[#7f0000]",
-    price: "₹299",
-    href: "https://rzp.io/rzp/How-to-talk-to-a-girl",
-  },
-];
+interface Book {
+  id: number;
+  title: string;
+  subtitle: string;
+  image: string;
+  tag: string;
+  tagColor: string;
+  price: string;
+  href: string;
+  hidden: boolean;
+  featured?: boolean;
+}
+
+// All visible books from books.json
+const products = (booksData as Book[]).filter((b) => !b.hidden);
 
 // ─── Main Component ───────────────────────────────────────────
 export default function CoursePlatform() {

@@ -3,40 +3,23 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import booksData from "@/data/books.json";
 
-const products = [
-  {
-    id: 1,
-    title: "Opener Vault",
-    subtitle: "50 Proven Lines",
-    image: "/opener_vault.png",
-    tag: "BESTSELLER",
-    tagColor: "bg-[#7f0000]",
-    price: "₹299",
-    href: "https://pages.razorpay.com/pl_T7w20RI546muZh/view",
-  },
-  {
-    id: 2,
-    title: "The Approach Blueprint",
-    subtitle: "How To Talk To Women Without Being Creepy",
-    image: "/approach_psycho.png",
-    tag: "POPULAR",
-    tagColor: "bg-white",
-    price: "₹499",
-    href: "https://pages.razorpay.com/pl_T8KezcbkXSpP6H/view",
-    featured: true,
-  },
-  {
-    id: 3,
-    title: "The Girl Psychology Playbook",
-    subtitle: "Understand Female Attraction",
-    image: "/girl.png",
-    tag: "NEW",
-    tagColor: "bg-[#7f0000]",
-    price: "₹299",
-    href: "https://pages.razorpay.com/pl_T7w8Pgiwh8NpMp/view",
-  },
-];
+// Only show visible (non-hidden) books, max 3 on homepage
+const products = (booksData as {
+  id: number;
+  title: string;
+  subtitle: string;
+  image: string;
+  tag: string;
+  tagColor: string;
+  price: string;
+  href: string;
+  hidden: boolean;
+  featured?: boolean;
+}[])
+  .filter((b) => !b.hidden)
+  .slice(0, 3);
 
 export default function CoursesSection() {
   const ref = useRef<HTMLDivElement>(null);
