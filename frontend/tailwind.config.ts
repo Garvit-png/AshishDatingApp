@@ -71,41 +71,9 @@ const config: Config = {
         mono: ["var(--font-mono)"],
         heading: ["var(--font-heading)"],
       },
-      keyframes: {
-        "slide-up": {
-          from: {
-            opacity: "0",
-            transform: "translateY(24px)",
-          },
-          to: {
-            opacity: "1",
-            transform: "translateY(0)",
-          },
-        },
-        "fade-in": {
-          from: { opacity: "0" },
-          to: { opacity: "1" },
-        },
-        "text-glow": {
-          "0%": {
-            textShadow: "0 0 10px rgba(255, 0, 0, 0.6), 0 0 20px rgba(255, 0, 0, 0.4)",
-          },
-          "50%": {
-            textShadow: "0 0 15px rgba(255, 50, 50, 0.9), 0 0 30px rgba(255, 0, 0, 0.8), 0 0 45px rgba(255, 0, 0, 0.6), 0 0 60px rgba(255, 0, 0, 0.4)",
-          },
-          "100%": {
-            textShadow: "0 0 10px rgba(255, 0, 0, 0.6), 0 0 20px rgba(255, 0, 0, 0.4)",
-          },
-        },
-      },
-      animation: {
-        "slide-up": "slide-up 0.65s cubic-bezier(0.22, 1, 0.36, 1) forwards",
-        "fade-in": "fade-in 0.7s ease forwards",
-        "text-glow": "text-glow 2.5s ease-in-out infinite",
-      },
     },
   },
-  plugins: [require("tw-animate-css")],
+  plugins: [],
 };
 
 export default config;

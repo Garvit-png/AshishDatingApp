@@ -1,4 +1,4 @@
 {
-  "buildCommand": "NEXT_TURBO=0 npm install && NEXT_TURBO=0 npm run build",
+  "buildCommand": "npm install && npm run build",
   "outputDirectory": ".next"
 }
