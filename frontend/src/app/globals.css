@@ -62,3 +62,9 @@
     text-shadow: 0 0 10px rgba(255, 0, 0, 0.6), 0 0 20px rgba(255, 0, 0, 0.4);
   }
 }
+
+@layer components {
+  .input-field {
+    @apply w-full bg-[#111] border border-[#333] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#555] placeholder:text-[#333];
+  }
+}
