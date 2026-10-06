@@ -3,13 +3,14 @@
 import { useState, useEffect } from "react";
 import AdminDashboard from "./AdminDashboard";
 
-type AuthState = "idle" | "sending" | "sent" | "verifying" | "error";
+type AuthState = "idle" | "verifying" | "error";
 
 export default function AdminPortal() {
   const [authState, setAuthState] = useState<AuthState>("idle");
-  const [otp, setOtp] = useState("");
+  const [passcode, setPasscode] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
   const [sessionToken, setSessionToken] = useState<string | null>(null);
+  const [showPasscode, setShowPasscode] = useState(false);
 
   // Restore session from localStorage
   useEffect(() => {
@@ -17,8 +18,7 @@ export default function AdminPortal() {
     if (stored) {
       try {
         const { token, iat } = JSON.parse(stored);
-        const age = Date.now() - iat;
-        if (age < 24 * 60 * 60 * 1000) {
+        if (Date.now() - iat < 24 * 60 * 60 * 1000) {
           setSessionToken(token);
         } else {
           localStorage.removeItem("admin_session");
@@ -29,31 +29,18 @@ export default function AdminPortal() {
     }
   }, []);
 
-  const handleSendOTP = async () => {
-    setAuthState("sending");
-    setErrorMsg("");
-    try {
-      const res = await fetch("/api/admin/send-otp", { method: "POST" });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Failed to send OTP");
-      setAuthState("sent");
-    } catch (e: unknown) {
-      setErrorMsg(e instanceof Error ? e.message : "Something went wrong");
-      setAuthState("error");
-    }
-  };
-
-  const handleVerifyOTP = async () => {
+  const handleVerify = async () => {
+    if (!passcode.trim()) return;
     setAuthState("verifying");
     setErrorMsg("");
     try {
-      const res = await fetch("/api/admin/verify-otp", {
+      const res = await fetch("/api/admin/verify-passcode", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ otp }),
+        body: JSON.stringify({ passcode: passcode.trim() }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Invalid OTP");
+      if (!res.ok) throw new Error(data.error ?? "Incorrect passcode");
       localStorage.setItem(
         "admin_session",
         JSON.stringify({ token: data.sessionToken, iat: Date.now() })
@@ -61,7 +48,8 @@ export default function AdminPortal() {
       setSessionToken(data.sessionToken);
     } catch (e: unknown) {
       setErrorMsg(e instanceof Error ? e.message : "Something went wrong");
-      setAuthState("sent");
+      setAuthState("error");
+      setPasscode("");
     }
   };
 
@@ -69,7 +57,7 @@ export default function AdminPortal() {
     localStorage.removeItem("admin_session");
     setSessionToken(null);
     setAuthState("idle");
-    setOtp("");
+    setPasscode("");
   };
 
   if (sessionToken) {
@@ -88,99 +76,63 @@ export default function AdminPortal() {
         </div>
 
         <div className="bg-[#0a0a0a] border border-[#222] rounded-2xl p-8">
-          {authState === "idle" || authState === "sending" || authState === "error" ? (
-            <>
-              <h2 className="text-xl font-bold text-white mb-2">Access Admin Panel</h2>
-              <p className="text-[#666] text-sm mb-8 leading-relaxed">
-                Click below to receive a one-time access code on{" "}
-                <span className="text-[#a3a3a3]">garvitgandhi0313@gmail.com</span>
-              </p>
+          <h2 className="text-xl font-bold text-white mb-2">Enter Passcode</h2>
+          <p className="text-[#555] text-sm mb-8">Enter your admin passcode to access the dashboard.</p>
 
-              {errorMsg && (
-                <div className="bg-red-950/40 border border-red-800/50 rounded-xl px-4 py-3 mb-6 text-red-400 text-sm">
-                  {errorMsg}
-                </div>
-              )}
-
-              <button
-                onClick={handleSendOTP}
-                disabled={authState === "sending"}
-                className="w-full bg-white text-black font-bold py-4 rounded-xl text-sm hover:bg-gray-100 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100 flex items-center justify-center gap-3"
-              >
-                {authState === "sending" ? (
-                  <>
-                    <span className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />
-                    Sending Code…
-                  </>
-                ) : (
-                  <>
-                    <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current">
-                      <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" />
-                    </svg>
-                    Generate & Send Access Code
-                  </>
-                )}
-              </button>
-            </>
-          ) : (
-            <>
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-8 h-8 bg-green-500/10 rounded-full flex items-center justify-center shrink-0">
-                  <svg viewBox="0 0 24 24" className="w-4 h-4 fill-green-500">
-                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
-                  </svg>
-                </div>
-                <div>
-                  <h2 className="text-base font-bold text-white">Code Sent!</h2>
-                  <p className="text-[#666] text-xs">Check garvitgandhi0313@gmail.com</p>
-                </div>
-              </div>
-
-              {errorMsg && (
-                <div className="bg-red-950/40 border border-red-800/50 rounded-xl px-4 py-3 mb-6 text-red-400 text-sm">
-                  {errorMsg}
-                </div>
-              )}
-
-              <label className="block text-xs font-bold text-[#a3a3a3] tracking-widest uppercase mb-3">
-                Enter 6-Digit Code
-              </label>
-              <input
-                type="text"
-                inputMode="numeric"
-                maxLength={6}
-                value={otp}
-                onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
-                placeholder="000000"
-                className="w-full bg-[#111] border border-[#333] rounded-xl px-5 py-4 text-white text-2xl font-black tracking-[12px] text-center placeholder:text-[#333] placeholder:tracking-[12px] focus:outline-none focus:border-[#555] mb-6"
-              />
-
-              <button
-                onClick={handleVerifyOTP}
-                disabled={otp.length !== 6 || authState === "verifying"}
-                className="w-full bg-[#7f0000] hover:bg-[#990000] text-white font-bold py-4 rounded-xl text-sm transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed disabled:scale-100 flex items-center justify-center gap-3 mb-4"
-              >
-                {authState === "verifying" ? (
-                  <>
-                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    Verifying…
-                  </>
-                ) : (
-                  "Enter Admin Panel →"
-                )}
-              </button>
-
-              <button
-                onClick={() => { setAuthState("idle"); setOtp(""); setErrorMsg(""); }}
-                className="w-full text-[#555] hover:text-[#a3a3a3] text-sm py-2 transition-colors"
-              >
-                ← Resend Code
-              </button>
-            </>
+          {errorMsg && (
+            <div className="bg-red-950/40 border border-red-800/50 rounded-xl px-4 py-3 mb-6 text-red-400 text-sm">
+              {errorMsg}
+            </div>
           )}
+
+          <label className="block text-[10px] font-bold text-[#555] tracking-widest uppercase mb-3">
+            Passcode
+          </label>
+
+          <div className="relative mb-6">
+            <input
+              type={showPasscode ? "text" : "password"}
+              value={passcode}
+              onChange={(e) => setPasscode(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleVerify()}
+              placeholder="Enter passcode"
+              autoComplete="off"
+              className="w-full bg-[#111] border border-[#333] rounded-xl px-5 py-4 text-white text-base font-bold tracking-widest focus:outline-none focus:border-[#555] placeholder:text-[#333] placeholder:tracking-normal placeholder:font-normal pr-12"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPasscode(p => !p)}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-[#444] hover:text-[#888] transition-colors"
+            >
+              {showPasscode ? (
+                <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current">
+                  <path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27z"/>
+                </svg>
+              ) : (
+                <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current">
+                  <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+                </svg>
+              )}
+            </button>
+          </div>
+
+          <button
+            onClick={handleVerify}
+            disabled={!passcode.trim() || authState === "verifying"}
+            className="w-full bg-white text-black font-bold py-4 rounded-xl text-sm hover:bg-gray-100 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed disabled:scale-100 flex items-center justify-center gap-3"
+          >
+            {authState === "verifying" ? (
+              <>
+                <span className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />
+                Verifying…
+              </>
+            ) : (
+              "Enter Admin Panel →"
+            )}
+          </button>
         </div>
 
-        <p className="text-center text-[#333] text-xs mt-8">
+        <p className="text-center text-[#2a2a2a] text-xs mt-8">
           This portal is private. Do not share access.
         </p>
       </div>
