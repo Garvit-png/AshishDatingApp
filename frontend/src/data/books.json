@@ -54,17 +54,5 @@
     "price": "₹299",
     "href": "https://rzp.io/rzp/How-to-talk-to-a-girl",
     "hidden": false
-  },
-  {
-    "title": "TEST",
-    "subtitle": "TEST",
-    "image": "/555e5e6a40392d3e277b898b3ced7e70.jpg",
-    "tag": "NEW",
-    "tagColor": "bg-[#7f0000]",
-    "price": "₹299",
-    "href": "TEST",
-    "hidden": false,
-    "featured": false,
-    "id": 1791289424922
   }
 ]
