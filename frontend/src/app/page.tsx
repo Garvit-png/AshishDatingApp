@@ -6,13 +6,12 @@ import IntroVideoSection from "@/components/IntroVideoSection";
 import EyeRollSection from "@/components/EyeRollSection";
 import Footer from "@/components/Footer";
 import AnnouncementPopup from "@/components/AnnouncementPopup";
+import TestimonialsSection from "@/components/TestimonialsSection";
 
-// Lazy load heavy sections (WebGL shaders, videos below fold)
 const HeroSection = dynamic(() => import("@/components/HeroSection"), { ssr: false });
 const StatsVideoSection = dynamic(() => import("@/components/StatsVideoSection"), { ssr: false });
 const StatsSection = dynamic(() => import("@/components/StatsSection"), { ssr: false });
 const CoursesSection = dynamic(() => import("@/components/CoursesSection"), { ssr: false });
-
 
 export default function HomePage() {
   return (
@@ -26,6 +25,7 @@ export default function HomePage() {
         <StatsVideoSection />
         <StatsSection />
         <CoursesSection />
+        <TestimonialsSection />
       </main>
       <Footer />
     </>
