@@ -7,8 +7,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   try {
-    const popup = await readPopupFromGitHub();
-    return NextResponse.json(popup);
+    const data = await readPopupFromGitHub();
+    return NextResponse.json(data);
   } catch (e: unknown) {
     return NextResponse.json({ error: e instanceof Error ? e.message : "Failed" }, { status: 500 });
   }
@@ -19,8 +19,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   try {
-    const popup = await req.json();
-    await writePopupToGitHub(popup);
+    const body = await req.json();
+    await writePopupToGitHub(body);
     return NextResponse.json({ success: true });
   } catch (e: unknown) {
     return NextResponse.json({ error: e instanceof Error ? e.message : "Failed" }, { status: 500 });

@@ -1,7 +1,3 @@
-/**
- * Read/write popup.json directly via GitHub Contents API.
- */
-
 const GITHUB_API = "https://api.github.com";
 const FILE_PATH = "frontend/src/data/popup.json";
 
@@ -14,7 +10,8 @@ function getConfig() {
   return { token, owner, repo, branch };
 }
 
-export interface PopupData {
+export interface PopupItem {
+  id: number;
   enabled: boolean;
   image: string;
   title: string;
@@ -24,7 +21,11 @@ export interface PopupData {
   buttonStyle: "red" | "white" | "black";
 }
 
-export async function readPopupFromGitHub(): Promise<PopupData> {
+export interface PopupFile {
+  popups: PopupItem[];
+}
+
+export async function readPopupFromGitHub(): Promise<PopupFile> {
   const { token, owner, repo, branch } = getConfig();
   const url = `${GITHUB_API}/repos/${owner}/${repo}/contents/${FILE_PATH}?ref=${branch}`;
   const res = await fetch(url, {
@@ -36,7 +37,7 @@ export async function readPopupFromGitHub(): Promise<PopupData> {
   return JSON.parse(Buffer.from(data.content, "base64").toString("utf-8"));
 }
 
-export async function writePopupToGitHub(popup: PopupData): Promise<void> {
+export async function writePopupToGitHub(file: PopupFile): Promise<void> {
   const { token, owner, repo, branch } = getConfig();
   const url = `${GITHUB_API}/repos/${owner}/${repo}/contents/${FILE_PATH}`;
 
@@ -55,8 +56,8 @@ export async function writePopupToGitHub(popup: PopupData): Promise<void> {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      message: "Admin: update popup",
-      content: Buffer.from(JSON.stringify(popup, null, 2)).toString("base64"),
+      message: "Admin: update popups",
+      content: Buffer.from(JSON.stringify(file, null, 2)).toString("base64"),
       sha,
       branch,
     }),
