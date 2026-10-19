@@ -1,3 +1,14 @@
 {
-  "popups": []
+  "popups": [
+    {
+      "enabled": true,
+      "image": "/555e5e6a40392d3e277b898b3ced7e70.jpg",
+      "title": "test popup",
+      "description": "test desc",
+      "buttonText": "test button",
+      "buttonLink": "https://www.testrail.com/lp/testrail-ai-test-management-platform/?utm_term=testlink&utm_campaign=gg_dg_geo6_search_competitor&utm_source=google&utm_medium=cpc&utm_content=testlink&hsa_acc=9739162558&hsa_cam=19300506639&hsa_grp=152855582056&hsa_ad=669993258215&hsa_src=g&hsa_tgt=kwd-300789978215&hsa_kw=testlink&hsa_mt=p&hsa_net=adwords&hsa_ver=3&gad_source=1&gad_campaignid=19300506639&gbraid=0AAAAAD_ADJFPbUEHKA4KWITxyaJXj4GQj&gclid=CjwKCAjw_9bWBhBGEiwAomyTIufktftFkuTmQUNGo27qbQnwmsK2oAP8zD--y77bkAKzkBoimzuiShoClkcQAvD_BwE",
+      "buttonStyle": "white",
+      "id": 1792406598708
+    }
+  ]
 }
