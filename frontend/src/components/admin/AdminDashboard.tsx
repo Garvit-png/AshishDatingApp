@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
+import ImageCropper from "./ImageCropper";
 
 // ── Types ─────────────────────────────────────────────────────
 interface Book {
@@ -64,6 +65,10 @@ export default function AdminDashboard({ sessionToken, onLogout }: {
   const [uploadingFor, setUploadingFor] = useState<UploadTarget | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [deleteBookConfirm, setDeleteBookConfirm] = useState<number | null>(null);
+
+  // Crop state
+  const [cropFile, setCropFile] = useState<File | null>(null);
+  const [cropTarget, setCropTarget] = useState<UploadTarget | null>(null);
 
   // Popup state
   const [popups, setPopups] = useState<PopupItem[]>([]);
@@ -222,10 +227,27 @@ export default function AdminDashboard({ sessionToken, onLogout }: {
       <input ref={fileInputRef} type="file" accept="image/*" className="hidden"
         onChange={(e) => {
           const file = e.target.files?.[0];
-          if (file && uploadingFor) handleImageUpload(file, uploadingFor);
+          if (file && uploadingFor) {
+            // Show cropper before uploading
+            setCropFile(file);
+            setCropTarget(uploadingFor);
+          }
           e.target.value = "";
         }}
       />
+
+      {/* Image Cropper Modal */}
+      {cropFile && cropTarget && (
+        <ImageCropper
+          file={cropFile}
+          onCropComplete={(croppedFile) => {
+            setCropFile(null);
+            handleImageUpload(croppedFile, cropTarget);
+            setCropTarget(null);
+          }}
+          onCancel={() => { setCropFile(null); setCropTarget(null); setUploadingFor(null); }}
+        />
+      )}
 
       {/* Header */}
       <header className="sticky top-0 z-40 border-b border-[#1a1a1a] bg-black/90 backdrop-blur-sm">

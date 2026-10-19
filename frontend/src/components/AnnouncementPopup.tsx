@@ -105,7 +105,7 @@ export default function AnnouncementPopup() {
               )}
               <button
                 onClick={handleClose}
-                className="w-7 h-7 bg-[#111] hover:bg-[#222] rounded-full flex items-center justify-center text-[#666] hover:text-white transition-all border border-[#2a2a2a]"
+                className="w-7 h-7 bg-white/15 hover:bg-white/30 rounded-full flex items-center justify-center text-white transition-all border border-white/30"
                 aria-label={index < total - 1 ? "Next" : "Close"}
               >
                 <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 fill-current">
