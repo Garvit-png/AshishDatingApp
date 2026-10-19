@@ -1,7 +1,7 @@
 {
   "popups": [
     {
-      "enabled": true,
+      "enabled": false,
       "image": "/555e5e6a40392d3e277b898b3ced7e70.jpg",
       "title": "test popup",
       "description": "test desc",
