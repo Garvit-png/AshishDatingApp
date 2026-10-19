@@ -5,6 +5,7 @@ import Navbar from "@/components/Navbar";
 import IntroVideoSection from "@/components/IntroVideoSection";
 import EyeRollSection from "@/components/EyeRollSection";
 import Footer from "@/components/Footer";
+import AnnouncementPopup from "@/components/AnnouncementPopup";
 
 // Lazy load heavy sections (WebGL shaders, videos below fold)
 const HeroSection = dynamic(() => import("@/components/HeroSection"), { ssr: false });
@@ -16,6 +17,7 @@ const CoursesSection = dynamic(() => import("@/components/CoursesSection"), { ss
 export default function HomePage() {
   return (
     <>
+      <AnnouncementPopup />
       <Navbar />
       <main>
         <IntroVideoSection />

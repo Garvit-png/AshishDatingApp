@@ -16,6 +16,26 @@ interface Book {
   featured?: boolean;
 }
 
+interface PopupData {
+  enabled: boolean;
+  image: string;
+  title: string;
+  description: string;
+  buttonText: string;
+  buttonLink: string;
+  buttonStyle: "red" | "white" | "black";
+}
+
+const EMPTY_POPUP: PopupData = {
+  enabled: false,
+  image: "",
+  title: "",
+  description: "",
+  buttonText: "",
+  buttonLink: "",
+  buttonStyle: "red",
+};
+
 const EMPTY_BOOK: Omit<Book, "id"> = {
   title: "",
   subtitle: "",
@@ -35,6 +55,8 @@ const TAG_COLOR_OPTIONS = [
   { label: "Black", value: "bg-black" },
 ];
 
+type Tab = "books" | "popup";
+
 export default function AdminDashboard({
   sessionToken,
   onLogout,
@@ -42,6 +64,7 @@ export default function AdminDashboard({
   sessionToken: string;
   onLogout: () => void;
 }) {
+  const [tab, setTab] = useState<Tab>("books");
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -49,9 +72,14 @@ export default function AdminDashboard({
   const [editingBook, setEditingBook] = useState<Book | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [newBook, setNewBook] = useState<Omit<Book, "id">>(EMPTY_BOOK);
-  const [uploadingFor, setUploadingFor] = useState<"edit" | "new" | null>(null);
+  const [uploadingFor, setUploadingFor] = useState<"edit" | "new" | "popup" | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
+
+  // Popup state
+  const [popup, setPopup] = useState<PopupData>(EMPTY_POPUP);
+  const [popupLoading, setPopupLoading] = useState(false);
+  const [savingPopup, setSavingPopup] = useState(false);
 
   const headers = {
     "Content-Type": "application/json",
@@ -77,9 +105,23 @@ export default function AdminDashboard({
     }
   };
 
-  useEffect(() => { fetchBooks(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const fetchPopup = async () => {
+    setPopupLoading(true);
+    try {
+      const res = await fetch("/api/admin/popup", { headers });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setPopup(data);
+    } catch {
+      showToast("Failed to load popup", "error");
+    } finally {
+      setPopupLoading(false);
+    }
+  };
 
-  const handleImageUpload = async (file: File, target: "edit" | "new") => {
+  useEffect(() => { fetchBooks(); fetchPopup(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleImageUpload = async (file: File, target: "edit" | "new" | "popup") => {
     setUploadingFor(target);
     const formData = new FormData();
     formData.append("file", file);
@@ -93,6 +135,8 @@ export default function AdminDashboard({
       if (!res.ok) throw new Error(data.error);
       if (target === "edit" && editingBook) {
         setEditingBook({ ...editingBook, image: data.path });
+      } else if (target === "popup") {
+        setPopup((prev) => ({ ...prev, image: data.path }));
       } else {
         setNewBook((prev) => ({ ...prev, image: data.path }));
       }
@@ -101,6 +145,23 @@ export default function AdminDashboard({
       showToast(e instanceof Error ? e.message : "Upload failed", "error");
     } finally {
       setUploadingFor(null);
+    }
+  };
+
+  const handleSavePopup = async () => {
+    setSavingPopup(true);
+    try {
+      const res = await fetch("/api/admin/popup", {
+        method: "POST",
+        headers,
+        body: JSON.stringify(popup),
+      });
+      if (!res.ok) throw new Error((await res.json()).error);
+      showToast("Popup saved ✓");
+    } catch (e: unknown) {
+      showToast(e instanceof Error ? e.message : "Save failed", "error");
+    } finally {
+      setSavingPopup(false);
     }
   };
 
@@ -213,6 +274,23 @@ export default function AdminDashboard({
             <p className="text-base font-black tracking-tight">ASHISH CHHIPA</p>
             <p className="text-[9px] font-bold tracking-[3px] text-[#7f0000] uppercase">Admin Panel</p>
           </div>
+
+          {/* Tabs */}
+          <nav className="flex items-center gap-1 bg-[#111] rounded-xl p-1 border border-[#1a1a1a]">
+            <button
+              onClick={() => setTab("books")}
+              className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${tab === "books" ? "bg-white text-black" : "text-[#555] hover:text-white"}`}
+            >
+              📚 Products
+            </button>
+            <button
+              onClick={() => setTab("popup")}
+              className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${tab === "popup" ? "bg-white text-black" : "text-[#555] hover:text-white"}`}
+            >
+              📣 Popup
+            </button>
+          </nav>
+
           <button
             onClick={onLogout}
             className="text-[#444] hover:text-white text-xs transition-colors flex items-center gap-1.5"
@@ -227,80 +305,240 @@ export default function AdminDashboard({
 
       <main className="max-w-5xl mx-auto px-6 py-10">
 
-        {/* Title + Add button */}
-        <div className="flex items-center justify-between mb-8">
+        {/* ── PRODUCTS TAB ── */}
+        {tab === "books" && (
           <div>
-            <h1 className="text-2xl font-black">Products</h1>
-            <p className="text-[#444] text-sm mt-0.5">
-              {books.filter(b => !b.hidden).length} visible · {books.filter(b => b.hidden).length} hidden
-            </p>
-          </div>
-          <button
-            onClick={() => { setShowAddForm(true); setEditingBook(null); }}
-            className="flex items-center gap-2 bg-white text-black font-bold px-5 py-2.5 rounded-xl text-sm hover:bg-gray-100 transition-all hover:scale-105 active:scale-95"
-          >
-            <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
-            Add Book
-          </button>
-        </div>
+            {/* Title + Add button */}
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h1 className="text-2xl font-black">Products</h1>
+                <p className="text-[#444] text-sm mt-0.5">
+                  {books.filter(b => !b.hidden).length} visible · {books.filter(b => b.hidden).length} hidden
+                </p>
+              </div>
+              <button
+                onClick={() => { setShowAddForm(true); setEditingBook(null); }}
+                className="flex items-center gap-2 bg-white text-black font-bold px-5 py-2.5 rounded-xl text-sm hover:bg-gray-100 transition-all hover:scale-105 active:scale-95"
+              >
+                <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+                Add Book
+              </button>
+            </div>
 
-        {/* Add Form */}
-        {showAddForm && (
-          <BookForm
-            book={newBook}
-            isNew
-            saving={saving}
-            uploadingFor={uploadingFor}
-            onUpload={(target) => { setUploadingFor(target); fileInputRef.current?.click(); }}
-            onChange={(field, value) => setNewBook(prev => ({ ...prev, [field]: value }))}
-            onSave={handleAddBook}
-            onCancel={() => { setShowAddForm(false); setNewBook(EMPTY_BOOK); }}
-          />
+            {/* Add Form */}
+            {showAddForm && (
+              <BookForm
+                book={newBook}
+                isNew
+                saving={saving}
+                uploadingFor={uploadingFor}
+                onUpload={(target) => { setUploadingFor(target); fileInputRef.current?.click(); }}
+                onChange={(field, value) => setNewBook(prev => ({ ...prev, [field]: value }))}
+                onSave={handleAddBook}
+                onCancel={() => { setShowAddForm(false); setNewBook(EMPTY_BOOK); }}
+              />
+            )}
+
+            {/* Books list */}
+            {loading ? (
+              <div className="flex justify-center py-24">
+                <span className="w-7 h-7 border-2 border-[#333] border-t-white rounded-full animate-spin" />
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {books.map((book) => (
+                  <div key={book.id}>
+                    {editingBook?.id === book.id ? (
+                      <BookForm
+                        book={editingBook}
+                        saving={saving}
+                        uploadingFor={uploadingFor}
+                        onUpload={(target) => { setUploadingFor(target); fileInputRef.current?.click(); }}
+                        onChange={(field, value) =>
+                          setEditingBook(prev => prev ? { ...prev, [field]: value } : prev)
+                        }
+                        onSave={handleSaveEdit}
+                        onCancel={() => setEditingBook(null)}
+                      />
+                    ) : (
+                      <BookRow
+                        book={book}
+                        onEdit={() => { setEditingBook(book); setShowAddForm(false); }}
+                        onToggleHidden={() => handleToggleHidden(book)}
+                        onDelete={() => setDeleteConfirm(book.id)}
+                      />
+                    )}
+                    {deleteConfirm === book.id && (
+                      <div className="mt-2 bg-red-950/30 border border-red-900/40 rounded-xl px-5 py-4 flex items-center justify-between">
+                        <p className="text-red-400 text-sm">Delete &ldquo;{book.title}&rdquo;? Cannot be undone.</p>
+                        <div className="flex gap-2">
+                          <button onClick={() => setDeleteConfirm(null)} className="px-4 py-2 text-sm text-[#666] hover:text-white border border-[#333] rounded-lg transition-colors">Cancel</button>
+                          <button onClick={() => handleDelete(book.id)} className="px-4 py-2 text-sm bg-red-700 hover:bg-red-600 text-white font-bold rounded-lg transition-colors">Delete</button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         )}
 
-        {/* Books list */}
-        {loading ? (
-          <div className="flex justify-center py-24">
-            <span className="w-7 h-7 border-2 border-[#333] border-t-white rounded-full animate-spin" />
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {books.map((book) => (
-              <div key={book.id}>
-                {editingBook?.id === book.id ? (
-                  <BookForm
-                    book={editingBook}
-                    saving={saving}
-                    uploadingFor={uploadingFor}
-                    onUpload={(target) => { setUploadingFor(target); fileInputRef.current?.click(); }}
-                    onChange={(field, value) =>
-                      setEditingBook(prev => prev ? { ...prev, [field]: value } : prev)
-                    }
-                    onSave={handleSaveEdit}
-                    onCancel={() => setEditingBook(null)}
-                  />
-                ) : (
-                  <BookRow
-                    book={book}
-                    onEdit={() => { setEditingBook(book); setShowAddForm(false); }}
-                    onToggleHidden={() => handleToggleHidden(book)}
-                    onDelete={() => setDeleteConfirm(book.id)}
-                  />
-                )}
+        {/* ── POPUP TAB ── */}
+        {tab === "popup" && (
+          <div className="max-w-xl">
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h1 className="text-2xl font-black">Announcement Popup</h1>
+                <p className="text-[#444] text-sm mt-0.5">Shown to visitors when they open the website</p>
+              </div>
+              {/* Live toggle */}
+              <label className="flex items-center gap-3 cursor-pointer">
+                <span className="text-xs text-[#666] font-semibold">{popup.enabled ? "Live" : "Off"}</span>
+                <div
+                  onClick={() => setPopup(p => ({ ...p, enabled: !p.enabled }))}
+                  className={`relative w-11 h-6 rounded-full transition-colors cursor-pointer ${popup.enabled ? "bg-[#7f0000]" : "bg-[#333]"}`}
+                >
+                  <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${popup.enabled ? "translate-x-5" : "translate-x-0.5"}`} />
+                </div>
+              </label>
+            </div>
 
-                {deleteConfirm === book.id && (
-                  <div className="mt-2 bg-red-950/30 border border-red-900/40 rounded-xl px-5 py-4 flex items-center justify-between">
-                    <p className="text-red-400 text-sm">Delete &ldquo;{book.title}&rdquo;? Cannot be undone.</p>
-                    <div className="flex gap-2">
-                      <button onClick={() => setDeleteConfirm(null)} className="px-4 py-2 text-sm text-[#666] hover:text-white border border-[#333] rounded-lg transition-colors">Cancel</button>
-                      <button onClick={() => handleDelete(book.id)} className="px-4 py-2 text-sm bg-red-700 hover:bg-red-600 text-white font-bold rounded-lg transition-colors">Delete</button>
+            {popupLoading ? (
+              <div className="flex justify-center py-20">
+                <span className="w-7 h-7 border-2 border-[#333] border-t-white rounded-full animate-spin" />
+              </div>
+            ) : (
+              <div className="bg-[#0a0a0a] border border-[#222] rounded-2xl p-6 space-y-5">
+
+                {/* Image upload */}
+                <Field label="Popup Image">
+                  <div className="flex items-center gap-3">
+                    {popup.image && (
+                      <div className="relative w-20 h-12 rounded-lg overflow-hidden border border-[#333] shrink-0">
+                        <Image src={popup.image} alt="popup" fill className="object-cover" />
+                      </div>
+                    )}
+                    <button
+                      onClick={() => { setUploadingFor("popup"); fileInputRef.current?.click(); }}
+                      disabled={uploadingFor !== null}
+                      className="flex-1 flex items-center justify-center gap-2 bg-[#111] border border-[#333] hover:border-[#555] rounded-xl px-4 py-2.5 text-sm text-[#888] hover:text-white transition-all disabled:opacity-50"
+                    >
+                      {uploadingFor === "popup" ? (
+                        <><span className="w-3 h-3 border-2 border-white/20 border-t-white rounded-full animate-spin" />Uploading…</>
+                      ) : (
+                        <><svg viewBox="0 0 24 24" className="w-4 h-4 fill-current"><path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"/></svg>
+                        {popup.image ? "Replace Image" : "Upload Image"}</>
+                      )}
+                    </button>
+                    {popup.image && (
+                      <button onClick={() => setPopup(p => ({ ...p, image: "" }))} className="text-[#555] hover:text-red-500 transition-colors text-xs">Remove</button>
+                    )}
+                  </div>
+                </Field>
+
+                {/* Title */}
+                <Field label="Title">
+                  <input
+                    value={popup.title}
+                    onChange={e => setPopup(p => ({ ...p, title: e.target.value }))}
+                    placeholder="e.g. New Playbook Just Dropped 🔥"
+                    className="input-field"
+                  />
+                </Field>
+
+                {/* Description */}
+                <Field label="Description">
+                  <textarea
+                    value={popup.description}
+                    onChange={e => setPopup(p => ({ ...p, description: e.target.value }))}
+                    placeholder="Short announcement text..."
+                    rows={3}
+                    className="input-field resize-none"
+                  />
+                </Field>
+
+                {/* Button Text */}
+                <Field label="Button Text">
+                  <input
+                    value={popup.buttonText}
+                    onChange={e => setPopup(p => ({ ...p, buttonText: e.target.value }))}
+                    placeholder="e.g. Buy Now · Get It Here · Learn More"
+                    className="input-field"
+                  />
+                </Field>
+
+                {/* Button Link */}
+                <Field label="Button Link">
+                  <input
+                    value={popup.buttonLink}
+                    onChange={e => setPopup(p => ({ ...p, buttonLink: e.target.value }))}
+                    placeholder="https://rzp.io/rzp/..."
+                    className="input-field font-mono text-xs"
+                  />
+                </Field>
+
+                {/* Button Style */}
+                <Field label="Button Style">
+                  <div className="flex gap-2">
+                    {(["red", "white", "black"] as const).map(style => (
+                      <button
+                        key={style}
+                        onClick={() => setPopup(p => ({ ...p, buttonStyle: style }))}
+                        className={`flex-1 py-2.5 rounded-xl text-xs font-bold capitalize border transition-all ${
+                          popup.buttonStyle === style
+                            ? style === "red" ? "bg-[#7f0000] border-[#7f0000] text-white"
+                              : style === "white" ? "bg-white border-white text-black"
+                              : "bg-[#111] border-white text-white"
+                            : "border-[#333] text-[#555] hover:border-[#555] hover:text-white bg-transparent"
+                        }`}
+                      >
+                        {style}
+                      </button>
+                    ))}
+                  </div>
+                </Field>
+
+                {/* Preview */}
+                {(popup.title || popup.description || popup.image) && (
+                  <div className="border border-[#222] rounded-xl overflow-hidden">
+                    <p className="text-[10px] font-bold tracking-widest text-[#444] uppercase px-4 py-2 border-b border-[#1a1a1a]">Preview</p>
+                    <div className="p-4 bg-[#050505]">
+                      {popup.image && (
+                        <div className="relative w-full rounded-lg overflow-hidden mb-3" style={{ aspectRatio: "16/9" }}>
+                          <Image src={popup.image} alt="preview" fill className="object-cover" />
+                        </div>
+                      )}
+                      {popup.title && <p className="font-black text-white text-base mb-1">{popup.title}</p>}
+                      {popup.description && <p className="text-[#888] text-xs mb-3">{popup.description}</p>}
+                      {popup.buttonText && (
+                        <div className={`text-center text-xs font-bold py-2.5 rounded-xl ${
+                          popup.buttonStyle === "red" ? "bg-[#7f0000] text-white"
+                          : popup.buttonStyle === "white" ? "bg-white text-black"
+                          : "bg-black text-white border border-white/20"
+                        }`}>
+                          {popup.buttonText}
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
+
+                {/* Save */}
+                <button
+                  onClick={handleSavePopup}
+                  disabled={savingPopup}
+                  className="w-full bg-white text-black font-bold py-3.5 rounded-xl text-sm hover:bg-gray-100 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:scale-100 flex items-center justify-center gap-2"
+                >
+                  {savingPopup ? (
+                    <><span className="w-3 h-3 border-2 border-black/20 border-t-black rounded-full animate-spin" />Saving…</>
+                  ) : "Save Popup"}
+                </button>
               </div>
-            ))}
+            )}
           </div>
         )}
+
       </main>
     </div>
   );
@@ -366,7 +604,7 @@ function BookForm({ book, isNew = false, saving, uploadingFor, onUpload, onChang
   book: Omit<Book, "id"> & { id?: number };
   isNew?: boolean;
   saving: boolean;
-  uploadingFor: "edit" | "new" | null;
+  uploadingFor: "edit" | "new" | "popup" | null;
   onUpload: (target: "edit" | "new") => void;
   onChange: (field: string, value: string | boolean) => void;
   onSave: () => void;
