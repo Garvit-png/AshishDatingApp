@@ -13,12 +13,13 @@ interface TestimonialsData {
 
 const data = testimonialsData as TestimonialsData;
 
-const AUTO_PLAY_INTERVAL = 3000; // ms between slides (3 seconds)
+const AUTO_PLAY_INTERVAL = 3000; // 3 seconds
 
 export default function TestimonialsSection() {
   const [current, setCurrent] = useState(0);
   const [paused, setPaused] = useState(false);
   const [inView, setInView] = useState(false);
+  const [direction, setDirection] = useState<"next" | "prev" | null>(null);
   const sectionRef = useRef<HTMLDivElement>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -34,8 +35,20 @@ export default function TestimonialsSection() {
     return () => observer.disconnect();
   }, []);
 
-  const next = useCallback(() => setCurrent(c => (c + 1) % total), [total]);
-  const prev = useCallback(() => setCurrent(c => (c - 1 + total) % total), [total]);
+  const next = useCallback(() => {
+    setDirection("next");
+    setCurrent(c => (c + 1) % total);
+  }, [total]);
+
+  const prev = useCallback(() => {
+    setDirection("prev");
+    setCurrent(c => (c - 1 + total) % total);
+  }, [total]);
+
+  const goTo = useCallback((index: number) => {
+    setDirection(index > current ? "next" : "prev");
+    setCurrent(index);
+  }, [current]);
 
   // Auto-play
   useEffect(() => {
@@ -86,36 +99,41 @@ export default function TestimonialsSection() {
 
           {/* Cards track */}
           <div className="w-full overflow-hidden px-12 sm:px-16">
-            <div className="flex justify-center items-center gap-4 sm:gap-6 will-change-transform">
-              {/* Show 3 cards: prev (faded), current (main), next (faded) */}
-              {[-1, 0, 1].map((offset) => {
-                const idx = (current + offset + total) % total;
+            <div className="relative h-[520px] flex items-center justify-center">
+              {/* Render all cards with absolute positioning for smooth transitions */}
+              {data.screenshots.map((screenshot, idx) => {
+                const offset = idx === current ? 0 : idx === (current - 1 + total) % total ? -1 : idx === (current + 1) % total ? 1 : null;
+                if (offset === null) return null;
+                
                 const isCenter = offset === 0;
+                
                 return (
                   <div
-                    key={`${idx}-${offset}`}
-                    onClick={() => !isCenter && setCurrent(idx)}
-                    className={`relative rounded-2xl overflow-hidden border cursor-pointer select-none flex-shrink-0 will-change-transform transition-all duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${
+                    key={idx}
+                    onClick={() => !isCenter && goTo(idx)}
+                    className={`absolute transition-all duration-700 ease-out cursor-pointer select-none will-change-transform rounded-2xl overflow-hidden border ${
                       isCenter
-                        ? "w-[260px] sm:w-[300px] md:w-[340px] border-white/20 shadow-2xl shadow-[#7f0000]/20 scale-100 opacity-100 z-10 hover:scale-[1.02]"
-                        : "w-[160px] sm:w-[200px] md:w-[240px] border-white/5 scale-[0.85] opacity-30 hover:opacity-60 hover:scale-90"
-                    } ${total < 3 && !isCenter ? "hidden sm:block" : ""}`}
+                        ? "w-[260px] sm:w-[300px] md:w-[340px] border-white/20 shadow-2xl shadow-[#7f0000]/20 scale-100 opacity-100 z-10"
+                        : "w-[160px] sm:w-[200px] md:w-[240px] border-white/5 scale-[0.85] opacity-40 hover:opacity-60 hover:scale-90 z-0"
+                    }`}
                     style={{ 
                       aspectRatio: "9/16", 
                       maxHeight: "520px",
+                      transform: `translateX(${offset * 100}%) scale(${isCenter ? 1 : 0.85})`,
                       filter: isCenter ? "none" : "blur(2px)",
                     }}
                   >
                     <Image
-                      src={data.screenshots[idx]}
+                      src={screenshot}
                       alt={`Testimonial ${idx + 1}`}
                       fill
-                      className="object-cover object-top transition-transform duration-700"
+                      className="object-cover object-top"
                       draggable={false}
+                      priority={Math.abs(offset) <= 1}
                     />
                     {/* Gradient overlay on side cards */}
                     {!isCenter && (
-                      <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/30 to-black/50 transition-opacity duration-700" />
+                      <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/30 to-black/50" />
                     )}
                     {/* Red glow on center card */}
                     {isCenter && (
@@ -162,8 +180,8 @@ export default function TestimonialsSection() {
               {data.screenshots.map((_, i) => (
                 <button
                   key={i}
-                  onClick={() => setCurrent(i)}
-                  className={`rounded-full transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${
+                  onClick={() => goTo(i)}
+                  className={`rounded-full transition-all duration-500 ease-out ${
                     i === current 
                       ? "w-6 h-1.5 bg-gradient-to-r from-[#7f0000] to-white shadow-lg shadow-[#7f0000]/30" 
                       : "w-1.5 h-1.5 bg-[#333] hover:bg-[#555] hover:scale-125"

@@ -72,7 +72,7 @@ export default function AnnouncementPopup() {
       <div className="fixed inset-0 z-[101] flex items-center justify-center px-4 pointer-events-none">
         <div
           key={index}
-          className="relative bg-[#0a0a0a] border border-[#222] rounded-2xl shadow-2xl w-full max-w-md pointer-events-auto overflow-hidden"
+          className="relative bg-[#0a0a0a] border border-[#222] rounded-2xl shadow-2xl w-full max-w-2xl pointer-events-auto overflow-hidden"
           style={{
             animation: animating
               ? "popup-out 0.2s ease forwards"
@@ -81,7 +81,7 @@ export default function AnnouncementPopup() {
           onClick={(e) => e.stopPropagation()}
         >
           {/* Top bar — counter + close */}
-          <div className="flex items-center justify-between px-4 pt-4 pb-2">
+          <div className="flex items-center justify-between px-5 pt-5 pb-2">
             {/* Dot indicators */}
             <div className="flex items-center gap-1.5">
               {total > 1 && activePopups.map((_, i) => (
@@ -117,7 +117,7 @@ export default function AnnouncementPopup() {
 
           {/* Image */}
           {popup.image && (
-            <div className="relative w-full" style={{ aspectRatio: "16/9" }}>
+            <div className="relative w-full" style={{ aspectRatio: "21/9" }}>
               <Image
                 src={popup.image}
                 alt={popup.title || "Announcement"}
@@ -129,7 +129,7 @@ export default function AnnouncementPopup() {
           )}
 
           {/* Content */}
-          <div className="px-5 pb-5 pt-3">
+          <div className="px-6 pb-6 pt-4">
             {popup.title && (
               <h2 className="text-xl font-black text-white mb-2 leading-tight">{popup.title}</h2>
             )}
