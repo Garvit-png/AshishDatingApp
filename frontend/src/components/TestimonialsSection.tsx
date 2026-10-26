@@ -1,96 +1,151 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import Image from "next/image";
 import testimonialsData from "@/data/testimonials.json";
 
-interface Testimonial {
-  id: number;
-  name: string;
-  handle: string;
-  photo: string;
-  text: string;
-  rating: number;
-  hidden: boolean;
-}
-
-interface TestimonialsFile {
+interface TestimonialsData {
   enabled: boolean;
   heading: string;
   subheading: string;
-  testimonials: Testimonial[];
+  screenshots: string[];
 }
 
-const data = testimonialsData as TestimonialsFile;
-const visible = data.testimonials.filter((t) => !t.hidden);
+const data = testimonialsData as TestimonialsData;
+
+const AUTO_PLAY_INTERVAL = 3000; // ms between slides (3 seconds)
 
 export default function TestimonialsSection() {
-  const ref = useRef<HTMLDivElement>(null);
+  const [current, setCurrent] = useState(0);
+  const [paused, setPaused] = useState(false);
   const [inView, setInView] = useState(false);
+  const sectionRef = useRef<HTMLDivElement>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  const total = data.screenshots.length;
+
+  // Intersection observer — only autoplay when visible
   useEffect(() => {
-    const observer = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setInView(true); observer.disconnect(); } }, { threshold: 0.1 });
-    if (ref.current) observer.observe(ref.current);
+    const observer = new IntersectionObserver(
+      ([e]) => setInView(e.isIntersecting),
+      { threshold: 0.2 }
+    );
+    if (sectionRef.current) observer.observe(sectionRef.current);
     return () => observer.disconnect();
   }, []);
 
-  if (!data.enabled || visible.length === 0) return null;
+  const next = useCallback(() => setCurrent(c => (c + 1) % total), [total]);
+  const prev = useCallback(() => setCurrent(c => (c - 1 + total) % total), [total]);
+
+  // Auto-play
+  useEffect(() => {
+    if (!inView || paused || total < 2) return;
+    timerRef.current = setInterval(next, AUTO_PLAY_INTERVAL);
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  }, [inView, paused, next, total]);
+
+  if (!data.enabled || total === 0) return null;
 
   return (
-    <section ref={ref} className="relative bg-black py-24 px-4 sm:px-6 lg:px-8 overflow-hidden">
-      {/* Subtle bg glow */}
+    <section
+      ref={sectionRef}
+      className="relative bg-black py-24 px-4 overflow-hidden"
+    >
+      {/* Background glow */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] rounded-full bg-[#7f0000]/10 blur-[120px]" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[400px] rounded-full bg-[#7f0000]/8 blur-[140px]" />
       </div>
 
       <div className="max-w-6xl mx-auto relative z-10">
+
         {/* Header */}
-        <div className={`text-center mb-16 transition-all duration-700 ${inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}>
-          <p className="text-[#7f0000] text-xs font-bold tracking-[4px] uppercase mb-4">TESTIMONIALS</p>
-          <h2 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight mb-4">
+        <div className={`text-center mb-14 transition-all duration-700 ${inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}>
+          <p className="text-[#7f0000] text-[10px] font-bold tracking-[4px] uppercase mb-4">TESTIMONIALS</p>
+          <h2 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight mb-3">
             {data.heading}
           </h2>
-          <p className="text-[#666] text-lg max-w-xl mx-auto">{data.subheading}</p>
+          <p className="text-[#555] text-base max-w-lg mx-auto">{data.subheading}</p>
         </div>
 
-        {/* Grid */}
-        <div className="columns-1 sm:columns-2 lg:columns-3 gap-5 space-y-5">
-          {visible.map((t, i) => (
-            <div
-              key={t.id}
-              className={`break-inside-avoid bg-[#0a0a0a] border border-[#1a1a1a] rounded-2xl p-6 transition-all duration-700 hover:border-[#2a2a2a]`}
-              style={{ transitionDelay: `${i * 80}ms`, opacity: inView ? 1 : 0, transform: inView ? "translateY(0)" : "translateY(20px)" }}
-            >
-              {/* Stars */}
-              <div className="flex gap-0.5 mb-4">
-                {Array.from({ length: 5 }).map((_, si) => (
-                  <svg key={si} viewBox="0 0 24 24" className={`w-4 h-4 ${si < t.rating ? "fill-[#ff1a1a]" : "fill-[#333]"}`}>
-                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                  </svg>
-                ))}
-              </div>
+        {/* Slider */}
+        <div
+          className="relative flex items-center justify-center"
+          onMouseEnter={() => setPaused(true)}
+          onMouseLeave={() => setPaused(false)}
+        >
+          {/* Prev button */}
+          <button
+            onClick={prev}
+            className="absolute left-0 sm:left-2 z-20 w-10 h-10 rounded-full bg-black/60 border border-white/10 hover:border-white/30 flex items-center justify-center text-white transition-all hover:scale-110 active:scale-95 backdrop-blur-sm"
+            aria-label="Previous"
+          >
+            <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current">
+              <path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6z"/>
+            </svg>
+          </button>
 
-              {/* Text */}
-              <p className="text-[#ccc] text-sm leading-relaxed mb-5">&ldquo;{t.text}&rdquo;</p>
-
-              {/* Author */}
-              <div className="flex items-center gap-3">
-                <div className="relative w-10 h-10 rounded-full overflow-hidden bg-[#111] border border-[#333] shrink-0">
-                  {t.photo
-                    ? <Image src={t.photo} alt={t.name} fill className="object-cover" />
-                    : <div className="w-full h-full flex items-center justify-center text-[#555] font-bold text-sm">
-                        {t.name.charAt(0).toUpperCase()}
-                      </div>
-                  }
-                </div>
-                <div>
-                  <p className="text-white font-bold text-sm leading-tight">{t.name}</p>
-                  {t.handle && <p className="text-[#555] text-xs">{t.handle}</p>}
-                </div>
-              </div>
+          {/* Cards track */}
+          <div className="w-full overflow-hidden px-12 sm:px-16">
+            <div className="flex justify-center items-center gap-4 sm:gap-6 will-change-transform transition-all duration-700 ease-out">
+              {/* Show 3 cards: prev (faded), current (main), next (faded) */}
+              {[-1, 0, 1].map((offset) => {
+                const idx = (current + offset + total) % total;
+                const isCenter = offset === 0;
+                return (
+                  <div
+                    key={`${idx}-${offset}`}
+                    onClick={() => !isCenter && setCurrent(idx)}
+                    className={`relative rounded-2xl overflow-hidden border transition-all duration-700 ease-out cursor-pointer select-none flex-shrink-0 will-change-transform ${
+                      isCenter
+                        ? "w-[260px] sm:w-[300px] md:w-[340px] border-white/20 shadow-2xl shadow-black/60 scale-100 opacity-100 z-10"
+                        : "w-[160px] sm:w-[200px] md:w-[240px] border-white/5 scale-90 opacity-30 hover:opacity-50"
+                    } ${total < 3 && !isCenter ? "hidden sm:block" : ""}`}
+                    style={{ aspectRatio: "9/16", maxHeight: "520px" }}
+                  >
+                    <Image
+                      src={data.screenshots[idx]}
+                      alt={`Testimonial ${idx + 1}`}
+                      fill
+                      className="object-cover object-top"
+                      draggable={false}
+                    />
+                    {/* Subtle gradient on side cards */}
+                    {!isCenter && (
+                      <div className="absolute inset-0 bg-black/30" />
+                    )}
+                  </div>
+                );
+              })}
             </div>
-          ))}
+          </div>
+
+          {/* Next button */}
+          <button
+            onClick={next}
+            className="absolute right-0 sm:right-2 z-20 w-10 h-10 rounded-full bg-black/60 border border-white/10 hover:border-white/30 flex items-center justify-center text-white transition-all hover:scale-110 active:scale-95 backdrop-blur-sm"
+            aria-label="Next"
+          >
+            <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current">
+              <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/>
+            </svg>
+          </button>
         </div>
+
+        {/* Dot indicators */}
+        {total > 1 && (
+          <div className="flex justify-center gap-1.5 mt-8">
+            {data.screenshots.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setCurrent(i)}
+                className={`rounded-full transition-all duration-500 ease-out ${
+                  i === current ? "w-5 h-1.5 bg-white" : "w-1.5 h-1.5 bg-[#333] hover:bg-[#555]"
+                }`}
+                aria-label={`Go to slide ${i + 1}`}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );

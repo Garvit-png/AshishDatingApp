@@ -10,21 +10,11 @@ function getConfig() {
   return { token, owner, repo, branch };
 }
 
-export interface Testimonial {
-  id: number;
-  name: string;
-  handle: string;
-  photo: string;
-  text: string;
-  rating: number;
-  hidden: boolean;
-}
-
 export interface TestimonialsFile {
   enabled: boolean;
   heading: string;
   subheading: string;
-  testimonials: Testimonial[];
+  screenshots: string[];
 }
 
 export async function readTestimonialsFromGitHub(): Promise<TestimonialsFile> {

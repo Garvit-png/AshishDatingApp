@@ -14,7 +14,10 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   if (!verifyAdminSession(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   try {
-    await writeTestimonialsToGitHub(await req.json());
+    const updates = await req.json();
+    const current = await readTestimonialsFromGitHub();
+    const merged = { ...current, ...updates };
+    await writeTestimonialsToGitHub(merged);
     return NextResponse.json({ success: true });
   } catch (e: unknown) {
     return NextResponse.json({ error: e instanceof Error ? e.message : "Failed" }, { status: 500 });

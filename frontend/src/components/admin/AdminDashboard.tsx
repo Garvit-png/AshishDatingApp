@@ -34,8 +34,8 @@ const TAG_COLOR_OPTIONS = [
   { label: "Black", value: "bg-black" },
 ];
 
-type Tab = "books" | "popup";
-type UploadTarget = "edit" | "new" | `popup-${number}` | "newpopup";
+type Tab = "books" | "popup" | "testimonials";
+type UploadTarget = "edit" | "new" | `popup-${number}` | "newpopup" | `testimonial-${number}` | "newtestimonial";
 
 // ── Main Dashboard ────────────────────────────────────────────
 export default function AdminDashboard({ sessionToken, onLogout }: {
@@ -60,6 +60,12 @@ export default function AdminDashboard({ sessionToken, onLogout }: {
   const [showAddPopup, setShowAddPopup] = useState(false);
   const [newPopup, setNewPopup] = useState<Omit<PopupItem, "id">>(EMPTY_POPUP);
   const [deletePopupConfirm, setDeletePopupConfirm] = useState<number | null>(null);
+
+  // Testimonials state
+  const [testimonials, setTestimonials] = useState<string[]>([]);
+  const [loadingTestimonials, setLoadingTestimonials] = useState(true);
+  const [savingTestimonials, setSavingTestimonials] = useState(false);
+  const [deleteTestimonialConfirm, setDeleteTestimonialConfirm] = useState<number | null>(null);
 
   // Upload / crop state
   const [uploadingFor, setUploadingFor] = useState<UploadTarget | null>(null);
@@ -99,7 +105,18 @@ export default function AdminDashboard({ sessionToken, onLogout }: {
     finally { setLoadingPopup(false); }
   };
 
-  useEffect(() => { fetchBooks(); fetchPopups(); }, []); // eslint-disable-line
+  const fetchTestimonials = async () => {
+    setLoadingTestimonials(true);
+    try {
+      const res = await fetch("/api/admin/testimonials", { headers });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setTestimonials(data.screenshots ?? []);
+    } catch { showToast("Failed to load testimonials", "error"); }
+    finally { setLoadingTestimonials(false); }
+  };
+
+  useEffect(() => { fetchBooks(); fetchPopups(); fetchTestimonials(); }, []); // eslint-disable-line
 
   // ── Image upload ───────────────────────────────────────────
   const handleImageUpload = async (file: File, target: UploadTarget) => {
@@ -120,6 +137,8 @@ export default function AdminDashboard({ sessionToken, onLogout }: {
         setNewBook(p => ({ ...p, image: data.path }));
       } else if (target === "newpopup") {
         setNewPopup(p => ({ ...p, image: data.path }));
+      } else if (target === "newtestimonial") {
+        await handleAddTestimonial(data.path);
       } else if (target.startsWith("popup-")) {
         const id = parseInt(target.replace("popup-", ""));
         setPopups(ps => ps.map(p => p.id === id ? { ...p, image: data.path } : p));
@@ -200,6 +219,34 @@ export default function AdminDashboard({ sessionToken, onLogout }: {
     await savePopups(popups.map(p => p.id === popup.id ? { ...p, enabled: !p.enabled } : p));
   };
 
+  // ── Testimonials CRUD ──────────────────────────────────────
+  const saveTestimonials = async (updated: string[]) => {
+    setSavingTestimonials(true);
+    try {
+      const res = await fetch("/api/admin/testimonials", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ screenshots: updated }),
+      });
+      if (!res.ok) throw new Error((await res.json()).error);
+      setTestimonials(updated);
+      showToast("Testimonials saved ✓");
+    } catch (e: unknown) {
+      showToast(e instanceof Error ? e.message : "Save failed", "error");
+    } finally {
+      setSavingTestimonials(false);
+    }
+  };
+
+  const handleAddTestimonial = async (imagePath: string) => {
+    await saveTestimonials([...testimonials, imagePath]);
+  };
+
+  const handleDeleteTestimonial = async (index: number) => {
+    await saveTestimonials(testimonials.filter((_, i) => i !== index));
+    setDeleteTestimonialConfirm(null);
+  };
+
   // ── Render ─────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-black text-white">
@@ -233,10 +280,10 @@ export default function AdminDashboard({ sessionToken, onLogout }: {
             <p className="text-[9px] font-bold tracking-[3px] text-[#7f0000] uppercase">Admin Panel</p>
           </div>
           <nav className="flex items-center gap-1 bg-[#111] rounded-xl p-1 border border-[#1a1a1a]">
-            {(["books", "popup"] as Tab[]).map(t => (
+            {(["books", "popup", "testimonials"] as Tab[]).map(t => (
               <button key={t} onClick={() => setTab(t)}
                 className={`px-5 py-1.5 rounded-lg text-xs font-bold transition-all ${tab === t ? "bg-white text-black" : "text-[#555] hover:text-white"}`}>
-                {t === "books" ? "📚 Products" : "📣 Popups"}
+                {t === "books" ? "📚 Products" : t === "popup" ? "📣 Popups" : "⭐ Testimonials"}
               </button>
             ))}
           </nav>
@@ -354,6 +401,94 @@ export default function AdminDashboard({ sessionToken, onLogout }: {
                         <div className="flex gap-2">
                           <button onClick={() => setDeletePopupConfirm(null)} className="px-4 py-2 text-sm text-[#666] hover:text-white border border-[#333] rounded-lg">Cancel</button>
                           <button onClick={() => handleDeletePopup(popup.id)} className="px-4 py-2 text-sm bg-red-700 hover:bg-red-600 text-white font-bold rounded-lg">Delete</button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── TESTIMONIALS TAB ── */}
+        {tab === "testimonials" && (
+          <div>
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h1 className="text-2xl font-black">Testimonials</h1>
+                <p className="text-[#444] text-sm mt-0.5">{testimonials.length} testimonial{testimonials.length !== 1 ? "s" : ""} · client feedback screenshots</p>
+              </div>
+              <button
+                onClick={() => {
+                  setUploadingFor("newtestimonial");
+                  fileInputRef.current?.click();
+                }}
+                disabled={uploadingFor !== null}
+                className="flex items-center gap-2 bg-white text-black font-bold px-5 py-2.5 rounded-xl text-sm hover:bg-gray-100 transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:scale-100"
+              >
+                {uploadingFor === "newtestimonial" ? (
+                  <>
+                    <span className="w-4 h-4 border-2 border-black/20 border-t-black rounded-full animate-spin" />
+                    Uploading...
+                  </>
+                ) : (
+                  <>
+                    <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current">
+                      <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
+                    </svg>
+                    Upload Screenshot
+                  </>
+                )}
+              </button>
+            </div>
+
+            {loadingTestimonials ? (
+              <div className="flex justify-center py-24">
+                <span className="w-7 h-7 border-2 border-[#333] border-t-white rounded-full animate-spin" />
+              </div>
+            ) : testimonials.length === 0 ? (
+              <div className="text-center py-16 text-[#444] text-sm">
+                No testimonials yet. Click &ldquo;Upload Screenshot&rdquo; to add your first one.
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                {testimonials.map((img, index) => (
+                  <div key={index} className="group relative aspect-[3/4] rounded-xl overflow-hidden bg-[#0a0a0a] border border-[#222] hover:border-[#444] transition-all">
+                    <Image
+                      src={img}
+                      alt={`Testimonial ${index + 1}`}
+                      fill
+                      className="object-cover"
+                    />
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/70 transition-all flex items-center justify-center">
+                      <button
+                        onClick={() => setDeleteTestimonialConfirm(index)}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity bg-red-600 hover:bg-red-700 text-white font-bold px-4 py-2 rounded-lg text-sm flex items-center gap-2"
+                      >
+                        <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current">
+                          <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" />
+                        </svg>
+                        Delete
+                      </button>
+                    </div>
+                    {deleteTestimonialConfirm === index && (
+                      <div className="absolute inset-0 bg-black/90 flex flex-col items-center justify-center p-4 gap-3">
+                        <p className="text-red-400 text-sm text-center font-semibold">Delete this testimonial?</p>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => setDeleteTestimonialConfirm(null)}
+                            className="px-3 py-1.5 text-xs text-[#666] hover:text-white border border-[#333] rounded-lg"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={() => handleDeleteTestimonial(index)}
+                            disabled={savingTestimonials}
+                            className="px-3 py-1.5 text-xs bg-red-700 hover:bg-red-600 text-white font-bold rounded-lg disabled:opacity-50"
+                          >
+                            {savingTestimonials ? "Deleting..." : "Delete"}
+                          </button>
                         </div>
                       </div>
                     )}
