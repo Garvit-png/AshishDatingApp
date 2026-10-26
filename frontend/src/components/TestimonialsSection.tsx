@@ -86,7 +86,7 @@ export default function TestimonialsSection() {
 
           {/* Cards track */}
           <div className="w-full overflow-hidden px-12 sm:px-16">
-            <div className="flex justify-center items-center gap-4 sm:gap-6 will-change-transform transition-all duration-700 ease-out">
+            <div className="flex justify-center items-center gap-4 sm:gap-6 will-change-transform">
               {/* Show 3 cards: prev (faded), current (main), next (faded) */}
               {[-1, 0, 1].map((offset) => {
                 const idx = (current + offset + total) % total;
@@ -95,23 +95,33 @@ export default function TestimonialsSection() {
                   <div
                     key={`${idx}-${offset}`}
                     onClick={() => !isCenter && setCurrent(idx)}
-                    className={`relative rounded-2xl overflow-hidden border transition-all duration-700 ease-out cursor-pointer select-none flex-shrink-0 will-change-transform ${
+                    className={`relative rounded-2xl overflow-hidden border cursor-pointer select-none flex-shrink-0 will-change-transform transition-all duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${
                       isCenter
-                        ? "w-[260px] sm:w-[300px] md:w-[340px] border-white/20 shadow-2xl shadow-black/60 scale-100 opacity-100 z-10"
-                        : "w-[160px] sm:w-[200px] md:w-[240px] border-white/5 scale-90 opacity-30 hover:opacity-50"
+                        ? "w-[260px] sm:w-[300px] md:w-[340px] border-white/20 shadow-2xl shadow-[#7f0000]/20 scale-100 opacity-100 z-10 hover:scale-[1.02]"
+                        : "w-[160px] sm:w-[200px] md:w-[240px] border-white/5 scale-[0.85] opacity-30 hover:opacity-60 hover:scale-90"
                     } ${total < 3 && !isCenter ? "hidden sm:block" : ""}`}
-                    style={{ aspectRatio: "9/16", maxHeight: "520px" }}
+                    style={{ 
+                      aspectRatio: "9/16", 
+                      maxHeight: "520px",
+                      filter: isCenter ? "none" : "blur(2px)",
+                    }}
                   >
                     <Image
                       src={data.screenshots[idx]}
                       alt={`Testimonial ${idx + 1}`}
                       fill
-                      className="object-cover object-top"
+                      className="object-cover object-top transition-transform duration-700"
                       draggable={false}
                     />
-                    {/* Subtle gradient on side cards */}
+                    {/* Gradient overlay on side cards */}
                     {!isCenter && (
-                      <div className="absolute inset-0 bg-black/30" />
+                      <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/30 to-black/50 transition-opacity duration-700" />
+                    )}
+                    {/* Red glow on center card */}
+                    {isCenter && (
+                      <div className="absolute inset-0 pointer-events-none">
+                        <div className="absolute inset-0 rounded-2xl ring-1 ring-[#7f0000]/30" />
+                      </div>
                     )}
                   </div>
                 );
@@ -131,21 +141,46 @@ export default function TestimonialsSection() {
           </button>
         </div>
 
-        {/* Dot indicators */}
+        {/* Dot indicators with progress bar */}
         {total > 1 && (
-          <div className="flex justify-center gap-1.5 mt-8">
-            {data.screenshots.map((_, i) => (
-              <button
-                key={i}
-                onClick={() => setCurrent(i)}
-                className={`rounded-full transition-all duration-500 ease-out ${
-                  i === current ? "w-5 h-1.5 bg-white" : "w-1.5 h-1.5 bg-[#333] hover:bg-[#555]"
-                }`}
-                aria-label={`Go to slide ${i + 1}`}
-              />
-            ))}
+          <div className="mt-10">
+            {/* Progress bar for current slide */}
+            {!paused && inView && (
+              <div className="max-w-xs mx-auto mb-4 h-0.5 bg-[#222] rounded-full overflow-hidden">
+                <div 
+                  key={current}
+                  className="h-full bg-gradient-to-r from-[#7f0000] to-white"
+                  style={{
+                    animation: `progress ${AUTO_PLAY_INTERVAL}ms linear forwards`
+                  }}
+                />
+              </div>
+            )}
+            
+            {/* Dot navigation */}
+            <div className="flex justify-center gap-2">
+              {data.screenshots.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setCurrent(i)}
+                  className={`rounded-full transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${
+                    i === current 
+                      ? "w-6 h-1.5 bg-gradient-to-r from-[#7f0000] to-white shadow-lg shadow-[#7f0000]/30" 
+                      : "w-1.5 h-1.5 bg-[#333] hover:bg-[#555] hover:scale-125"
+                  }`}
+                  aria-label={`Go to slide ${i + 1}`}
+                />
+              ))}
+            </div>
           </div>
         )}
+
+        <style jsx>{`
+          @keyframes progress {
+            from { width: 0%; }
+            to { width: 100%; }
+          }
+        `}</style>
       </div>
     </section>
   );
