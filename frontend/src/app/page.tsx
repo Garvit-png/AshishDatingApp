@@ -24,8 +24,8 @@ export default function HomePage() {
         <HeroSection />
         <StatsVideoSection />
         <StatsSection />
-        <CoursesSection />
         <TestimonialsSection />
+        <CoursesSection />
       </main>
       <Footer />
     </>
