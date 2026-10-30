@@ -7,6 +7,7 @@ import EyeRollSection from "@/components/EyeRollSection";
 import Footer from "@/components/Footer";
 import AnnouncementPopup from "@/components/AnnouncementPopup";
 import TestimonialsSection from "@/components/TestimonialsSection";
+import BookingSection from "@/components/BookingSection";
 
 const HeroSection = dynamic(() => import("@/components/HeroSection"), { ssr: false });
 const StatsVideoSection = dynamic(() => import("@/components/StatsVideoSection"), { ssr: false });
@@ -26,6 +27,7 @@ export default function HomePage() {
         <StatsSection />
         <TestimonialsSection />
         <CoursesSection />
+        <BookingSection />
       </main>
       <Footer />
     </>
