@@ -1,0 +1,317 @@
+{
+  "settings": {
+    "siteTitle": "Ashish Chhipa – Attract Better. Date Smarter. Build Lasting Love.",
+    "siteDescription": "Join thousands of learners and transform your dating life with expert-led courses, playbooks, and proven strategies by Ashish Chhipa.",
+    "accentColor": "#ff1a1a",
+    "animations": true,
+    "smoothScroll": true,
+    "stickyMobileCta": true,
+    "mobileCtaText": "Get the Playbooks",
+    "mobileCtaLink": "#playbooks"
+  },
+  "announcement": {
+    "enabled": false,
+    "text": "🔥 Launch offer: all playbooks at special prices this week",
+    "linkText": "Shop now",
+    "link": "#playbooks",
+    "style": "red"
+  },
+  "nav": {
+    "brand": "ASHISH CHHIPA",
+    "links": [
+      {
+        "label": "Playbooks",
+        "href": "#playbooks"
+      },
+      {
+        "label": "Results",
+        "href": "#testimonials"
+      },
+      {
+        "label": "1-on-1",
+        "href": "#book"
+      },
+      {
+        "label": "All Courses",
+        "href": "/courses"
+      }
+    ],
+    "ctaText": "Explore Books & Courses",
+    "ctaLink": "#playbooks"
+  },
+  "sections": [
+    {
+      "id": "intro",
+      "visible": true
+    },
+    {
+      "id": "eyeroll",
+      "visible": true
+    },
+    {
+      "id": "hero",
+      "visible": true
+    },
+    {
+      "id": "stats",
+      "visible": true
+    },
+    {
+      "id": "dateSmarter",
+      "visible": true
+    },
+    {
+      "id": "testimonials",
+      "visible": true
+    },
+    {
+      "id": "products",
+      "visible": true
+    },
+    {
+      "id": "booking",
+      "visible": true
+    }
+  ],
+  "intro": {
+    "eyebrow": "Introducing",
+    "name": "Ashish Chhipa",
+    "scrollHint": "Scroll to Unlock Your Beast",
+    "video": "/shuru.mp4"
+  },
+  "eyeroll": {
+    "bigText": "DONT STOP",
+    "image": "/eyeroll.webp"
+  },
+  "hero": {
+    "line1": "Attract Better.",
+    "line2": "Date Smarter.",
+    "line3": "Build Lasting Love.",
+    "subtitle": "Join thousands of learners and transform your dating life with expert-led courses, playbooks, and proven strategies.",
+    "ctaText": "Start Learning Now",
+    "ctaLink": "#playbooks",
+    "photo": "/ashish.jpeg",
+    "photoName": "Ashish Chhipa",
+    "photoRole": "Dating Coach & Mentor"
+  },
+  "stats": {
+    "video": "/stats.mp4",
+    "items": [
+      {
+        "value": "4.9★",
+        "label": "Average Rating"
+      },
+      {
+        "value": "1L+",
+        "label": "Members Transformed"
+      },
+      {
+        "value": "95%",
+        "label": "Success Rate"
+      },
+      {
+        "value": "50+",
+        "label": "Countries Reached"
+      }
+    ]
+  },
+  "dateSmarter": {
+    "title": "DATE SMARTER",
+    "subtitle": "Don't chase people. Become someone worth chasing.",
+    "video": "/stats.mp4",
+    "headline": "Only Pickup Lines aren't gonna work. You deserve something better.",
+    "buttonText": "Shop Now",
+    "buttonLink": "#playbooks"
+  },
+  "testimonials": {
+    "eyebrow": "TESTIMONIALS",
+    "heading": "Real Results. Real People.",
+    "subheading": "Thousands of guys have already transformed their dating life.",
+    "autoplaySeconds": 3,
+    "screenshots": [
+      "/FCA21339-2C1E-4DA5-9211-B8D3BD695893.jpeg",
+      "/IMG_1855.jpeg",
+      "/5CE324C4-4AAB-4316-8760-BB1641A449CB.jpeg",
+      "/IMG_1905.png",
+      "/55B421F1-3C59-4C53-9B8C-D52ECA4AE307.jpeg"
+    ]
+  },
+  "products": {
+    "heading": "Explore Courses & Playbooks",
+    "tagline": "REAL DATING STRATEGY. REAL PSYCHOLOGY. ZERO CRINGE.",
+    "buyText": "Buy Now",
+    "homeCount": 3,
+    "viewAllText": "View All Courses & Playbooks",
+    "items": [
+      {
+        "id": 1,
+        "title": "Opener Vault",
+        "subtitle": "50 Proven Openers",
+        "image": "/opener_vault.png",
+        "tag": "BESTSELLER",
+        "tagStyle": "red",
+        "price": "₹299",
+        "oldPrice": "",
+        "href": "https://rzp.io/rzp/opener-vault",
+        "hidden": false,
+        "featured": false
+      },
+      {
+        "id": 2,
+        "title": "The Approach Blueprint",
+        "subtitle": "How To Talk To Women Without Being Creepy",
+        "image": "/approach_psycho.png",
+        "tag": "POPULAR",
+        "tagStyle": "white",
+        "price": "₹499",
+        "oldPrice": "",
+        "href": "https://rzp.io/rzp/the-approach-blueprint",
+        "hidden": false,
+        "featured": true
+      },
+      {
+        "id": 3,
+        "title": "The Girl Psychology Playbook",
+        "subtitle": "Understand Female Attraction",
+        "image": "/girl.png",
+        "tag": "NEW",
+        "tagStyle": "red",
+        "price": "₹299",
+        "oldPrice": "",
+        "href": "https://rzp.io/rzp/girl-psychology-playbook",
+        "hidden": false,
+        "featured": false
+      },
+      {
+        "id": 4,
+        "title": "Approach to Intimacy",
+        "subtitle": "Build Deep, Real Connections",
+        "image": "/approach_intimacy.png",
+        "tag": "NEW",
+        "tagStyle": "red",
+        "price": "₹299",
+        "oldPrice": "",
+        "href": "https://rzp.io/rzp/approach-to-intimacy",
+        "hidden": false,
+        "featured": false
+      },
+      {
+        "id": 5,
+        "title": "How To Talk To A Girl",
+        "subtitle": "Conversations That Create Attraction",
+        "image": "/how to talk to girl.png",
+        "tag": "NEW",
+        "tagStyle": "red",
+        "price": "₹299",
+        "oldPrice": "",
+        "href": "https://rzp.io/rzp/How-to-talk-to-a-girl",
+        "hidden": false,
+        "featured": false
+      }
+    ]
+  },
+  "booking": {
+    "badge": "1-on-1 with Ashish",
+    "heading": "Stuck in chats?",
+    "highlight": "Let's fix it, live.",
+    "description": "Mixed signals decode karo, replies master karo, aur awkward chats ko confident conversations mein badlo — personalised guidance, seedha call pe.",
+    "url": "https://superprofile.bio/bookings/ashishchhipaofficial",
+    "ctaTitle": "Book Your Session",
+    "ctaSubtitle": "Slot choose karo →",
+    "sessions": [
+      {
+        "id": 1,
+        "title": "Chat Game Audit",
+        "mins": "20 mins",
+        "price": "₹899",
+        "was": "₹1199",
+        "tag": "Most Popular",
+        "link": "https://superprofile.bio/bookings/ashishchhipaofficial?sessionId=6ade0a0a287f720007728eed"
+      },
+      {
+        "id": 2,
+        "title": "Conversation Fix",
+        "mins": "30 mins",
+        "price": "₹1699",
+        "was": "₹2000",
+        "tag": "",
+        "link": "https://superprofile.bio/bookings/ashishchhipaofficial?sessionId=6ade7e28f7f76f00072d1d54"
+      },
+      {
+        "id": 3,
+        "title": "Dating & Relationship Clarity",
+        "mins": "45 mins",
+        "price": "₹2500",
+        "was": "₹3200",
+        "tag": "",
+        "link": "https://superprofile.bio/bookings/ashishchhipaofficial?sessionId=6adf75f0c9033400079c0f09"
+      },
+      {
+        "id": 4,
+        "title": "Clarity & Direction",
+        "mins": "60 mins",
+        "price": "₹3000",
+        "was": "₹3700",
+        "tag": "",
+        "link": "https://superprofile.bio/bookings/ashishchhipaofficial?sessionId=6adf8027279cb000075810e8"
+      },
+      {
+        "id": 5,
+        "title": "Transformation Roadmap",
+        "mins": "90 mins",
+        "price": "₹6999",
+        "was": "₹10000",
+        "tag": "",
+        "link": "https://superprofile.bio/bookings/ashishchhipaofficial?sessionId=6ae0d0d935b1a90007e3c51c"
+      }
+    ]
+  },
+  "coursesPage": {
+    "badge": "✦ Limited Seats Available",
+    "headingLines": [
+      {
+        "lead": "Build",
+        "highlight": "Standards."
+      },
+      {
+        "lead": "Create",
+        "highlight": "Attraction."
+      },
+      {
+        "lead": "Date With",
+        "highlight": "Confidence."
+      }
+    ],
+    "subtitle": "The exact playbooks and courses that took men from awkward to magnetic — without fake pickup tactics.",
+    "benefits": [
+      "Approach any woman with zero hesitation",
+      "Text conversations that build real attraction",
+      "Read her psychology before she says a word",
+      "Turn rejections into unshakeable confidence",
+      "Land dates consistently — not just occasionally",
+      "Build an identity women are naturally drawn to"
+    ],
+    "ctaText": "Explore All Courses",
+    "socialProofTitle": "1000+ Daily Hustlers",
+    "socialProofSubtitle": "already enrolled",
+    "quoteTop": "Stop Chasing.",
+    "quoteMain": "Be The One To Be Chased.",
+    "quoteAuthor": "— Ashish Chhipa",
+    "portrait": "/bewho.jpg",
+    "gridTitle": "All Courses & Playbooks",
+    "gridSubtitle": "Real dating strategy. Real psychology. Zero cringe.",
+    "showLoader": true
+  },
+  "footer": {
+    "aboutTitle": "Ashish Chhipa",
+    "aboutText": "Ashish Chhipa is a dating coach and content creator who helps people build confidence, understand the science behind attraction, and improve their dating skills. To improve his advice based on psychology and real-life experience, he pledges his values to communicate better, form meaningful connections, and navigate love in the early and confident way.",
+    "instagram": "https://www.instagram.com/ashishchhipaofficial/",
+    "partnerTitle": "Sellixa",
+    "partnerTag": "Made In Collaboration",
+    "partnerText": "Sellixa helps coaches and teachers to offer their income through courses, ebooks, webinars, and growth speakers.",
+    "partnerInstagram": "https://www.instagram.com/sellixa._hq/",
+    "copyright": "Copyright © 2025 Appvision, Inc. All rights reserved.",
+    "video": "/ghoda.mp4"
+  },
+  "popups": []
+}

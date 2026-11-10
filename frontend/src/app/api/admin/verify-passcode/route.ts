@@ -1,26 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
+import { checkPasscode, createSessionToken } from "@/lib/adminAuth";
 
 export async function POST(req: NextRequest) {
-  const { passcode } = await req.json();
-
-  if (!passcode) {
+  const { passcode } = await req.json().catch(() => ({ passcode: "" }));
+  if (!passcode || typeof passcode !== "string") {
     return NextResponse.json({ error: "Passcode required" }, { status: 400 });
   }
-
-  const correctPasscode = process.env.ADMIN_PASSCODE;
-
-  if (!correctPasscode) {
-    return NextResponse.json({ error: "Server misconfigured" }, { status: 500 });
+  if (!process.env.ADMIN_PASSCODE) {
+    return NextResponse.json({ error: "Server misconfigured: ADMIN_PASSCODE is not set" }, { status: 500 });
   }
-
-  if (passcode.trim() !== correctPasscode) {
+  if (!checkPasscode(passcode)) {
+    // Small delay slows down guessing
+    await new Promise((r) => setTimeout(r, 600));
     return NextResponse.json({ error: "Incorrect passcode" }, { status: 401 });
   }
-
-  // Issue session token — server-side only, never exposes passcode
-  const sessionToken = Buffer.from(
-    JSON.stringify({ admin: true, iat: Date.now(), secret: process.env.OTP_SECRET })
-  ).toString("base64");
-
-  return NextResponse.json({ success: true, sessionToken });
+  return NextResponse.json({ success: true, sessionToken: createSessionToken() });
 }

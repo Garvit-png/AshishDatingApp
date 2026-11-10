@@ -1,140 +1,70 @@
 "use client";
 
-import { useRef, useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
-import CoursesLoader from "@/components/CoursesLoader";
-import CoursesHero from "@/components/CoursesHero";
-import booksData from "@/data/books.json";
+import { useContent } from "@/content/ContentContext";
+import CoursesLoader from "./CoursesLoader";
+import CoursesHero from "./CoursesHero";
+import ProductCard from "./ProductCard";
+import Reveal from "./motion/Reveal";
+import Footer from "./Footer";
 
-interface Book {
-  id: number;
-  title: string;
-  subtitle: string;
-  image: string;
-  tag: string;
-  tagColor: string;
-  price: string;
-  href: string;
-  hidden: boolean;
-  featured?: boolean;
-}
-
-// All visible books from books.json
-const products = (booksData as Book[]).filter((b) => !b.hidden);
-
-// ─── Main Component ───────────────────────────────────────────
 export default function CoursePlatform() {
-  const [loading, setLoading] = useState(true);
-  const coursesGridRef = useRef<HTMLDivElement>(null);
+  const { content, preview } = useContent();
+  const c = content.coursesPage;
+  const products = content.products.items.filter((b) => !b.hidden);
+  const [loading, setLoading] = useState(false);
+  const gridRef = useRef<HTMLDivElement>(null);
 
-  const handleLoaderComplete = useCallback(() => {
-    setLoading(false);
-  }, []);
+  // Show the intro loader once per visit only
+  useEffect(() => {
+    if (!c.showLoader || preview) return;
+    try {
+      if (sessionStorage.getItem("courses_loader_seen")) return;
+      sessionStorage.setItem("courses_loader_seen", "1");
+    } catch {}
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- depends on sessionStorage (browser only)
+    setLoading(true);
+  }, [c.showLoader, preview]);
 
+  const done = useCallback(() => setLoading(false), []);
   const scrollToCourses = useCallback(() => {
-    coursesGridRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    const el = gridRef.current;
+    if (!el) return;
+    if (window.__lenis) window.__lenis.scrollTo(el);
+    else el.scrollIntoView({ behavior: "smooth", block: "start" });
   }, []);
 
   return (
     <div className="min-h-screen bg-black text-white">
-      {loading && <CoursesLoader onComplete={handleLoaderComplete} />}
-
-      {/* Hero */}
+      {loading && <CoursesLoader onComplete={done} />}
       <CoursesHero onScrollToCourses={scrollToCourses} />
 
-      {/* Scroll anchor */}
-      <div ref={coursesGridRef} />
-
-      {/* Back to Home bar */}
-      <div className="border-b border-[#222]">
-        <div className="max-w-6xl mx-auto px-6 py-6 flex justify-between items-center">
-          <Link
-            href="/"
-            className="text-[#a3a3a3] hover:text-white flex items-center gap-2 transition-colors text-sm"
-          >
-            <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current">
-              <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" />
-            </svg>
-            Back to Home
+      <div ref={gridRef} className="border-b border-white/10 sticky top-0 z-30 bg-black/70 backdrop-blur-xl">
+        <div className="max-w-6xl mx-auto px-5 sm:px-6 py-4 flex justify-between items-center">
+          <Link href="/" className="text-white/60 hover:text-white flex items-center gap-2 transition-colors text-sm group">
+            <span className="transition-transform group-hover:-translate-x-1">←</span> Back to Home
           </Link>
-          <span className="text-[10px] font-bold tracking-widest text-[#7f0000] uppercase">
-            ASHISH CHHIPA
-          </span>
+          <span className="text-[10px] font-bold tracking-[0.3em] text-accent uppercase">{content.nav.brand}</span>
         </div>
       </div>
 
-      {/* Page Title */}
-      <div className="max-w-6xl mx-auto px-6 pt-16 pb-12 text-center">
-        <h1 className="text-4xl md:text-6xl font-black tracking-tight mb-4">
-          All Courses &amp; Playbooks
-        </h1>
-        <p className="text-[#666] text-lg max-w-xl mx-auto">
-          Real dating strategy. Real psychology. Zero cringe.
-        </p>
+      <div className="max-w-6xl mx-auto px-5 sm:px-6 pt-16 pb-12 text-center">
+        <Reveal as="h1" variant="blur" className="text-4xl md:text-6xl font-black tracking-tight mb-4">{c.gridTitle}</Reveal>
+        <Reveal as="p" delay={100} className="text-white/50 text-lg max-w-xl mx-auto">{c.gridSubtitle}</Reveal>
       </div>
 
-      {/* Books Grid */}
-      <div className="max-w-6xl mx-auto px-6 pb-24">
-        <div className="flex flex-wrap justify-center gap-12 sm:gap-16">
-          {products.map((product) => (
-            <div
-              key={product.id}
-              className="flex flex-col items-center w-56 sm:w-64 group"
-            >
-              {/* Tag */}
-              <span
-                className={`${product.tagColor} ${
-                  product.tagColor === "bg-white" ? "text-black" : "text-white"
-                } text-[10px] font-bold tracking-widest px-3 py-1 rounded-full uppercase mb-4`}
-              >
-                {product.tag}
-              </span>
-
-              {/* Book Cover */}
-              <Link
-                href={product.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full flex justify-center"
-              >
-                <div
-                  className="relative w-full rounded-xl overflow-hidden ring-1 ring-white/10 shadow-2xl transition-transform duration-300 hover:scale-105"
-                  style={{ aspectRatio: "2/3" }}
-                >
-                  <Image
-                    src={product.image}
-                    alt={product.title}
-                    fill
-                    className="object-cover"
-                  />
-                  <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-colors duration-300 rounded-xl" />
-                </div>
-              </Link>
-
-              {/* Title */}
-              <div className="mt-5 text-center">
-                <h3 className="text-base font-bold text-white leading-tight">
-                  {product.title}
-                </h3>
-                <p className="text-[#666] text-xs mt-1">{product.subtitle}</p>
-              </div>
-
-              {/* Buy Now */}
-              <div className="mt-4 w-full">
-                <Link
-                  href={product.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-block w-full text-center text-sm font-bold bg-white text-black px-6 py-3 rounded-full hover:bg-gray-200 transition-transform hover:scale-105 active:scale-95 shadow-lg"
-                >
-                  Buy Now
-                </Link>
-              </div>
-            </div>
+      <div className="max-w-6xl mx-auto px-5 sm:px-6 pb-24">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-14 sm:gap-10 lg:gap-14 justify-items-center">
+          {products.map((product, i) => (
+            <Reveal key={product.id} delay={(i % 3) * 110} className="w-full flex justify-center">
+              <ProductCard product={product} buyText={content.products.buyText} />
+            </Reveal>
           ))}
         </div>
       </div>
+
+      <Footer />
     </div>
   );
 }

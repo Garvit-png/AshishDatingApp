@@ -1,73 +1,32 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAdminSession } from "@/lib/adminAuth";
+import { GitHubError, writeFile } from "@/lib/github";
+
+const MAX_BYTES = 4 * 1024 * 1024; // Vercel request body limit is ~4.5MB
+const ALLOWED = /^(image\/(jpeg|png|webp|gif|avif)|video\/(mp4|webm))$/;
 
 export async function POST(req: NextRequest) {
   if (!verifyAdminSession(req)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const token = process.env.GITHUB_TOKEN;
-  const owner = process.env.GITHUB_OWNER;
-  const repo = process.env.GITHUB_REPO;
-  const branch = process.env.GITHUB_BRANCH ?? "main";
-
-  if (!token || !owner || !repo) {
-    return NextResponse.json({ error: "GitHub not configured" }, { status: 500 });
+    return NextResponse.json({ error: "Session expired. Please log in again." }, { status: 401 });
   }
 
   const formData = await req.formData();
-  const file = formData.get("file") as File;
+  const file = formData.get("file");
+  if (!(file instanceof File)) return NextResponse.json({ error: "No file provided" }, { status: 400 });
+  if (!ALLOWED.test(file.type)) return NextResponse.json({ error: "Only JPG, PNG, WEBP, GIF, AVIF images or MP4/WEBM videos" }, { status: 400 });
+  if (file.size > MAX_BYTES) return NextResponse.json({ error: "File is too big (max 4MB). Try a smaller image." }, { status: 400 });
 
-  if (!file) {
-    return NextResponse.json({ error: "No file provided" }, { status: 400 });
-  }
+  // Unique, URL-safe name so uploads never overwrite each other
+  const dot = file.name.lastIndexOf(".");
+  const base = (dot > 0 ? file.name.slice(0, dot) : file.name).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || "upload";
+  const ext = (dot > 0 ? file.name.slice(dot + 1) : file.type.split("/")[1]).toLowerCase().replace(/[^a-z0-9]/g, "");
+  const filename = `${base}-${Date.now().toString(36)}.${ext}`;
 
-  // Sanitize filename
-  const filename = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-  const arrayBuffer = await file.arrayBuffer();
-  const base64 = Buffer.from(arrayBuffer).toString("base64");
-
-  const githubPath = `frontend/public/${filename}`;
-  const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${githubPath}`;
-
-  // Check if file already exists (to get SHA for update)
-  let sha: string | undefined;
   try {
-    const checkRes = await fetch(apiUrl, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: "application/vnd.github+json",
-      },
-    });
-    if (checkRes.ok) {
-      const existing = await checkRes.json();
-      sha = existing.sha;
-    }
-  } catch {
-    // File doesn't exist yet, that's fine
+    await writeFile(`frontend/public/uploads/${filename}`, Buffer.from(await file.arrayBuffer()), `Admin: upload ${filename}`);
+    return NextResponse.json({ success: true, path: `/uploads/${filename}` });
+  } catch (e) {
+    const status = e instanceof GitHubError ? e.status : 500;
+    return NextResponse.json({ error: e instanceof Error ? e.message : "Upload failed" }, { status });
   }
-
-  const body: Record<string, string> = {
-    message: `Admin: upload image ${filename}`,
-    content: base64,
-    branch,
-  };
-  if (sha) body.sha = sha;
-
-  const res = await fetch(apiUrl, {
-    method: "PUT",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      Accept: "application/vnd.github+json",
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(body),
-  });
-
-  if (!res.ok) {
-    const err = await res.json();
-    return NextResponse.json({ error: err.message ?? "GitHub upload failed" }, { status: 500 });
-  }
-
-  return NextResponse.json({ success: true, path: `/${filename}` });
 }

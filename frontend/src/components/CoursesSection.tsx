@@ -1,122 +1,51 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
-import booksData from "@/data/books.json";
-
-// Only show visible (non-hidden) books, max 3 on homepage
-const products = (booksData as {
-  id: number;
-  title: string;
-  subtitle: string;
-  image: string;
-  tag: string;
-  tagColor: string;
-  price: string;
-  href: string;
-  hidden: boolean;
-  featured?: boolean;
-}[])
-  .filter((b) => !b.hidden)
-  .slice(0, 3);
+import { useContent } from "@/content/ContentContext";
+import ProductCard from "./ProductCard";
+import Reveal from "./motion/Reveal";
 
 export default function CoursesSection() {
-  const ref = useRef<HTMLDivElement>(null);
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setVisible(true);
-          observer.disconnect();
-        }
-      },
-      { threshold: 0.1 }
-    );
-    if (ref.current) observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, []);
+  const { content } = useContent();
+  const p = content.products;
+  const visible = p.items.filter((b) => !b.hidden);
+  const shown = visible.slice(0, Math.max(1, p.homeCount));
 
   return (
-    <section
-      ref={ref}
-      id="playbooks"
-      className="relative bg-black min-h-screen flex flex-col items-center py-20 px-4 sm:px-6 lg:px-8 overflow-hidden"
-    >
-      <div className="max-w-6xl mx-auto w-full flex-grow flex flex-col justify-center">
-        {/* Header */}
-        <div
-          className={`relative w-full text-center transition-all duration-700 px-4 z-30 mb-12 md:mb-20 ${
-            visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
-          }`}
-        >
-          <h2 className="text-4xl sm:text-5xl lg:text-7xl font-black text-white mb-4 tracking-tight">
-            Explore Courses &amp; Playbooks
-          </h2>
-          <p className="text-xs font-bold tracking-widest text-[#ff0000] uppercase">
-            REAL DATING STRATEGY. REAL PSYCHOLOGY. ZERO CRINGE.
-          </p>
+    <section id="playbooks" className="relative bg-black py-20 sm:py-28 px-5 sm:px-6 lg:px-8 overflow-hidden scroll-mt-16">
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent" />
+      <div className="max-w-6xl mx-auto">
+        <div className="text-center mb-14 md:mb-20">
+          <Reveal as="h2" variant="blur" className="text-4xl sm:text-5xl lg:text-7xl font-black text-white mb-5 tracking-tight">
+            {p.heading}
+          </Reveal>
+          <Reveal as="p" delay={120} className="text-[11px] sm:text-xs font-bold tracking-[0.3em] text-accent uppercase">
+            {p.tagline}
+          </Reveal>
         </div>
 
-        {/* Book Cards */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-12 sm:gap-16">
-          {products.map((product, i) => (
-            <div
-              key={product.id}
-              className={`relative flex flex-col items-center transition-all duration-700 group w-64 sm:w-72 ${
-                visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
-              }`}
-              style={{ transitionDelay: `${i * 120}ms` }}
-            >
-              {/* Book Cover */}
-              <Link href={product.href} target="_blank" rel="noopener noreferrer" className="w-full flex justify-center">
-                <div className="relative transition-all duration-500 ease-out hover:scale-105 cursor-pointer hover:z-20">
-                  <div
-                    className="relative w-56 sm:w-64 rounded-xl overflow-hidden ring-1 ring-white/10 shadow-2xl"
-                    style={{ aspectRatio: "2/3" }}
-                  >
-                    <Image
-                      src={product.image}
-                      alt={product.title}
-                      fill
-                      className="object-cover"
-                    />
-                    {/* Hover overlay */}
-                    <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-colors duration-300 rounded-xl" />
-                  </div>
-                </div>
-              </Link>
-
-              {/* Buy Now Button */}
-              <div className="mt-8 text-center w-full">
-                <Link
-                  href={product.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-block text-sm font-bold bg-white text-black px-10 py-3.5 rounded-full hover:bg-gray-200 transition-transform hover:scale-105 active:scale-95 shadow-lg"
-                >
-                  Buy Now
-                </Link>
-              </div>
-            </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-14 sm:gap-10 lg:gap-14 justify-items-center">
+          {shown.map((product, i) => (
+            <Reveal key={product.id} delay={i * 120} className="w-full flex justify-center">
+              <ProductCard product={product} buyText={p.buyText} />
+            </Reveal>
           ))}
         </div>
 
-        {/* View All CTA */}
-        <div
-          className={`text-center mt-20 transition-all duration-700 delay-500 ${
-            visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
-          }`}
-        >
-          <Link
-            href="/courses"
-            className="inline-flex items-center gap-2 border-2 border-white text-white font-bold px-8 py-3 rounded-full text-sm hover:bg-white hover:text-black transition-all duration-200"
-          >
-            View All Courses &amp; Playbooks
-          </Link>
-        </div>
+        {visible.length > 0 && (
+          <Reveal className="text-center mt-16 sm:mt-20" delay={200}>
+            <Link
+              href="/courses"
+              className="group inline-flex items-center gap-3 border-2 border-white/80 text-white font-bold px-8 py-3.5 rounded-full text-sm hover:bg-white hover:text-black transition-all duration-300"
+            >
+              {p.viewAllText}
+              {visible.length > shown.length && (
+                <span className="text-[10px] bg-[#7f0000] text-white rounded-full px-2 py-0.5">+{visible.length - shown.length}</span>
+              )}
+              <span aria-hidden className="transition-transform group-hover:translate-x-1">→</span>
+            </Link>
+          </Reveal>
+        )}
       </div>
     </section>
   );

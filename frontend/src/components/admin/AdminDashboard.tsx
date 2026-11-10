@@ -1,707 +1,492 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import Image from "next/image";
-import ImageCropper from "./ImageCropper";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { SiteContent } from "@/content/types";
+import { normalizeContent } from "@/content/normalize";
+import { Btn, UploadCtx, shrinkImage } from "./fields";
+import { Icon } from "./icons";
+import LivePreview from "./LivePreview";
+import OverviewPanel from "./OverviewPanel";
+import ProductsPanel from "./ProductsPanel";
+import PopupsPanel from "./PopupsPanel";
+import { BookingPanel, CoursesPagePanel, HeaderFooterPanel, HeroPanel, LayoutPanel, SettingsPanel, StatsPanel, TestimonialsPanel } from "./panels";
 
-// ── Types ─────────────────────────────────────────────────────
-interface Book {
-  id: number; title: string; subtitle: string; image: string;
-  tag: string; tagColor: string; price: string; href: string;
-  hidden: boolean; featured?: boolean;
-}
-
-interface PopupItem {
-  id: number; enabled: boolean; image: string; title: string;
-  description: string; buttonText: string; buttonLink: string;
-  buttonStyle: "red" | "white" | "black";
-}
-
-const EMPTY_BOOK: Omit<Book, "id"> = {
-  title: "", subtitle: "", image: "", tag: "NEW",
-  tagColor: "bg-[#7f0000]", price: "₹299", href: "", hidden: false, featured: false,
-};
-
-const EMPTY_POPUP: Omit<PopupItem, "id"> = {
-  enabled: true, image: "", title: "", description: "",
-  buttonText: "", buttonLink: "", buttonStyle: "red",
-};
-
-const TAG_OPTIONS = ["BESTSELLER", "POPULAR", "NEW", "HOT", "LIMITED"];
-const TAG_COLOR_OPTIONS = [
-  { label: "Red", value: "bg-[#7f0000]" },
-  { label: "White", value: "bg-white" },
-  { label: "Black", value: "bg-black" },
+type Key = keyof SiteContent;
+const NAV: { id: string; label: string; icon: string; keys: Key[]; scroll?: string; page?: string }[] = [
+  { id: "overview", label: "Overview", icon: "home", keys: [] },
+  { id: "layout", label: "Page layout", icon: "layout", keys: ["sections"] },
+  { id: "hero", label: "Hero & intro", icon: "sparkles", keys: ["intro", "eyeroll", "hero"], scroll: "about" },
+  { id: "stats", label: "Stats & videos", icon: "chart", keys: ["stats", "dateSmarter"] },
+  { id: "products", label: "Courses & playbooks", icon: "book", keys: ["products"], scroll: "playbooks" },
+  { id: "testimonials", label: "Testimonials", icon: "star", keys: ["testimonials"], scroll: "testimonials" },
+  { id: "booking", label: "1-on-1 sessions", icon: "calendar", keys: ["booking"], scroll: "book" },
+  { id: "popups", label: "Popups", icon: "megaphone", keys: ["popups"] },
+  { id: "courses", label: "Courses page", icon: "grad", keys: ["coursesPage"], page: "/courses" },
+  { id: "header", label: "Header & footer", icon: "nav", keys: ["nav", "announcement", "footer"] },
+  { id: "settings", label: "Settings", icon: "settings", keys: ["settings"] },
 ];
 
-type Tab = "books" | "popup" | "testimonials";
-type UploadTarget = "edit" | "new" | `popup-${number}` | "newpopup" | `testimonial-${number}` | "newtestimonial";
+const DRAFT_KEY = "ac_admin_draft_v1";
+const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
 
-// ── Main Dashboard ────────────────────────────────────────────
-export default function AdminDashboard({ sessionToken, onLogout }: {
-  sessionToken: string; onLogout: () => void;
-}) {
-  const [tab, setTab] = useState<Tab>("books");
+type Toast = { id: number; msg: string; type: "success" | "error" | "info" };
 
-  // Books state
-  const [books, setBooks] = useState<Book[]>([]);
-  const [loadingBooks, setLoadingBooks] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [editingBook, setEditingBook] = useState<Book | null>(null);
-  const [showAddBook, setShowAddBook] = useState(false);
-  const [newBook, setNewBook] = useState<Omit<Book, "id">>(EMPTY_BOOK);
-  const [deleteBookConfirm, setDeleteBookConfirm] = useState<number | null>(null);
+export default function AdminDashboard({ sessionToken, onLogout }: { sessionToken: string; onLogout: (reason?: string) => void }) {
+  const [published, setPublished] = useState<SiteContent | null>(null);
+  const [draft, setDraft] = useState<SiteContent | null>(null);
+  const [sha, setSha] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState("");
+  const [tab, setTab] = useState("overview");
+  const [assets, setAssets] = useState<Record<string, string>>({});
+  const [toasts, setToasts] = useState<Toast[]>([]);
+  const [restored, setRestored] = useState<string | null>(null);
+  const [publishOpen, setPublishOpen] = useState(false);
+  const [publishing, setPublishing] = useState(false);
+  const [lastPublished, setLastPublished] = useState<string | null>(null);
+  const [showPreview, setShowPreview] = useState(true);
+  const [mobilePreview, setMobilePreview] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [previewPage, setPreviewPage] = useState("/");
+  const past = useRef<SiteContent[]>([]);
+  const future = useRef<SiteContent[]>([]);
+  const lastPush = useRef(0);
+  const mainRef = useRef<HTMLDivElement>(null);
 
-  // Popup state
-  const [popups, setPopups] = useState<PopupItem[]>([]);
-  const [loadingPopup, setLoadingPopup] = useState(true);
-  const [savingPopup, setSavingPopup] = useState(false);
-  const [editingPopupId, setEditingPopupId] = useState<number | null>(null);
-  const [showAddPopup, setShowAddPopup] = useState(false);
-  const [newPopup, setNewPopup] = useState<Omit<PopupItem, "id">>(EMPTY_POPUP);
-  const [deletePopupConfirm, setDeletePopupConfirm] = useState<number | null>(null);
+  const toast = useCallback((msg: string, type: Toast["type"] = "success") => {
+    const id = Date.now() + Math.random();
+    setToasts((t) => [...t, { id, msg, type }]);
+    setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 4000);
+  }, []);
 
-  // Testimonials state
-  const [testimonials, setTestimonials] = useState<string[]>([]);
-  const [loadingTestimonials, setLoadingTestimonials] = useState(true);
-  const [savingTestimonials, setSavingTestimonials] = useState(false);
-  const [deleteTestimonialConfirm, setDeleteTestimonialConfirm] = useState<number | null>(null);
-
-  // Upload / crop state
-  const [uploadingFor, setUploadingFor] = useState<UploadTarget | null>(null);
-  const [cropFile, setCropFile] = useState<File | null>(null);
-  const [cropTarget, setCropTarget] = useState<UploadTarget | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // Toast
-  const [toast, setToast] = useState<{ msg: string; type: "success" | "error" } | null>(null);
-  const showToast = (msg: string, type: "success" | "error" = "success") => {
-    setToast({ msg, type });
-    setTimeout(() => setToast(null), 3500);
-  };
-
-  const headers = { "Content-Type": "application/json", "x-admin-token": sessionToken };
-
-  // ── Fetch ──────────────────────────────────────────────────
-  const fetchBooks = async () => {
-    setLoadingBooks(true);
-    try {
-      const res = await fetch("/api/admin/books", { headers });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-      setBooks(data);
-    } catch { showToast("Failed to load books", "error"); }
-    finally { setLoadingBooks(false); }
-  };
-
-  const fetchPopups = async () => {
-    setLoadingPopup(true);
-    try {
-      const res = await fetch("/api/admin/popup", { headers });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-      setPopups(data.popups ?? []);
-    } catch { showToast("Failed to load popups", "error"); }
-    finally { setLoadingPopup(false); }
-  };
-
-  const fetchTestimonials = async () => {
-    setLoadingTestimonials(true);
-    try {
-      const res = await fetch("/api/admin/testimonials", { headers });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-      setTestimonials(data.screenshots ?? []);
-    } catch { showToast("Failed to load testimonials", "error"); }
-    finally { setLoadingTestimonials(false); }
-  };
-
-  useEffect(() => { fetchBooks(); fetchPopups(); fetchTestimonials(); }, []); // eslint-disable-line
-
-  // ── Image upload ───────────────────────────────────────────
-  const handleImageUpload = async (file: File, target: UploadTarget) => {
-    setUploadingFor(target);
-    const formData = new FormData();
-    formData.append("file", file);
-    try {
-      const res = await fetch("/api/admin/upload", {
-        method: "POST",
-        headers: { "x-admin-token": sessionToken },
-        body: formData,
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-      if (target === "edit" && editingBook) {
-        setEditingBook({ ...editingBook, image: data.path });
-      } else if (target === "new") {
-        setNewBook(p => ({ ...p, image: data.path }));
-      } else if (target === "newpopup") {
-        setNewPopup(p => ({ ...p, image: data.path }));
-      } else if (target === "newtestimonial") {
-        await handleAddTestimonial(data.path);
-      } else if (target.startsWith("popup-")) {
-        const id = parseInt(target.replace("popup-", ""));
-        setPopups(ps => ps.map(p => p.id === id ? { ...p, image: data.path } : p));
+  const api = useCallback(
+    async (url: string, init: RequestInit = {}) => {
+      const res = await fetch(url, { ...init, headers: { "x-admin-token": sessionToken, ...(init.body instanceof FormData ? {} : { "Content-Type": "application/json" }), ...init.headers } });
+      const data = await res.json().catch(() => ({}));
+      if (res.status === 401) {
+        onLogout("Your session expired. Please log in again — your changes are saved on this device.");
+        throw new Error("Session expired");
       }
-      showToast("Image uploaded ✓");
-    } catch (e: unknown) {
-      showToast(e instanceof Error ? e.message : "Upload failed", "error");
-    } finally { setUploadingFor(null); }
-  };
+      if (!res.ok) throw Object.assign(new Error(data.error ?? `Request failed (${res.status})`), { status: res.status });
+      return data;
+    },
+    [sessionToken, onLogout]
+  );
 
-  // ── Books CRUD ─────────────────────────────────────────────
-  const handleSaveEditBook = async () => {
-    if (!editingBook) return;
-    setSaving(true);
+  // ── Load ────────────────────────────────────────────────────
+  const load = useCallback(async () => {
+    setLoadError("");
     try {
-      const res = await fetch("/api/admin/books", { method: "PUT", headers, body: JSON.stringify(editingBook) });
-      if (!res.ok) throw new Error((await res.json()).error);
-      await fetchBooks(); setEditingBook(null); showToast("Saved ✓");
-    } catch (e: unknown) { showToast(e instanceof Error ? e.message : "Save failed", "error"); }
-    finally { setSaving(false); }
-  };
+      const data = await api("/api/admin/content");
+      const content = normalizeContent(data.content);
+      setPublished(content);
+      setSha(data.sha);
+      let start = content;
+      try {
+        const saved = JSON.parse(localStorage.getItem(DRAFT_KEY) || "null");
+        if (saved && saved.baseSha === data.sha && !same(normalizeContent(saved.content), content)) {
+          start = normalizeContent(saved.content);
+          setRestored(new Date(saved.at).toLocaleString());
+        }
+      } catch {}
+      setDraft(start);
+      past.current = [];
+      future.current = [];
+    } catch (e) {
+      if (e instanceof Error && e.message !== "Session expired") setLoadError(e.message);
+    }
+  }, [api]);
 
-  const handleAddBook = async () => {
-    if (!newBook.title || !newBook.href) { showToast("Title and payment link required", "error"); return; }
-    setSaving(true);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- initial data fetch
+    load();
+  }, [load]);
+
+  // Keep a copy of the draft on this device
+  useEffect(() => {
+    if (!draft || !published) return;
+    const t = setTimeout(() => {
+      try {
+        if (same(draft, published)) localStorage.removeItem(DRAFT_KEY);
+        else localStorage.setItem(DRAFT_KEY, JSON.stringify({ content: draft, baseSha: sha, at: Date.now() }));
+      } catch {}
+    }, 400);
+    return () => clearTimeout(t);
+  }, [draft, published, sha]);
+
+  // ── Editing with undo/redo ─────────────────────────────────
+  // draftRef always holds the latest draft so several quick edits never overwrite each other
+  const draftRef = useRef<SiteContent | null>(null);
+  useEffect(() => {
+    draftRef.current = draft;
+  }, [draft]);
+
+  const [history, setHistory] = useState({ undo: 0, redo: 0 });
+  const commit = useCallback((next: SiteContent) => {
+    draftRef.current = next;
+    setDraft(next);
+    setHistory({ undo: past.current.length, redo: future.current.length });
+  }, []);
+
+  const set = useCallback(
+    (fn: (d: SiteContent) => void) => {
+      const d = draftRef.current;
+      if (!d) return;
+      const now = Date.now();
+      // Typing in one field quickly counts as one undo step
+      if (now - lastPush.current > 700) past.current = [...past.current.slice(-60), d];
+      lastPush.current = now;
+      future.current = [];
+      const next = structuredClone(d);
+      fn(next);
+      commit(next);
+    },
+    [commit]
+  );
+
+  const undo = useCallback(() => {
+    const prev = past.current.pop();
+    if (!prev || !draftRef.current) return;
+    future.current.push(draftRef.current);
+    lastPush.current = 0;
+    commit(prev);
+  }, [commit]);
+
+  const redo = useCallback(() => {
+    const next = future.current.pop();
+    if (!next || !draftRef.current) return;
+    past.current.push(draftRef.current);
+    commit(next);
+  }, [commit]);
+
+  const dirtyKeys = useMemo(() => {
+    if (!draft || !published) return new Set<Key>();
+    return new Set((Object.keys(draft) as Key[]).filter((k) => !same(draft[k], published[k])));
+  }, [draft, published]);
+  const dirty = dirtyKeys.size > 0;
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const mod = e.metaKey || e.ctrlKey;
+      if (!mod) return;
+      const typing = (e.target as HTMLElement)?.matches?.("input, textarea");
+      if (e.key.toLowerCase() === "z" && !typing) {
+        e.preventDefault();
+        if (e.shiftKey) redo();
+        else undo();
+      } else if (e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        if (dirty) setPublishOpen(true);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [undo, redo, dirty]);
+
+  // ── Upload ─────────────────────────────────────────────────
+  const upload = useCallback(
+    async (file: File) => {
+      const ready = file.type.startsWith("image/") ? await shrinkImage(file) : file;
+      const fd = new FormData();
+      fd.append("file", ready);
+      const data = await api("/api/admin/upload", { method: "POST", body: fd });
+      setAssets((a) => ({ ...a, [data.path]: URL.createObjectURL(ready) }));
+      toast("Uploaded ✓");
+      return data.path as string;
+    },
+    [api, toast]
+  );
+  const asset = useCallback((src: string) => assets[src] ?? src, [assets]);
+  const uploadCtx = useMemo(() => ({ upload, asset }), [upload, asset]);
+
+  // ── Publish ────────────────────────────────────────────────
+  const publish = async (message: string) => {
+    if (!draft) return;
+    setPublishing(true);
     try {
-      const res = await fetch("/api/admin/books", { method: "POST", headers, body: JSON.stringify(newBook) });
-      if (!res.ok) throw new Error((await res.json()).error);
-      await fetchBooks(); setNewBook(EMPTY_BOOK); setShowAddBook(false); showToast("Book added ✓");
-    } catch (e: unknown) { showToast(e instanceof Error ? e.message : "Add failed", "error"); }
-    finally { setSaving(false); }
-  };
-
-  const handleToggleHidden = async (book: Book) => {
-    try {
-      const res = await fetch("/api/admin/books", { method: "PUT", headers, body: JSON.stringify({ ...book, hidden: !book.hidden }) });
-      if (!res.ok) throw new Error((await res.json()).error);
-      await fetchBooks(); showToast(book.hidden ? "Visible ✓" : "Hidden ✓");
-    } catch { showToast("Failed", "error"); }
-  };
-
-  const handleDeleteBook = async (id: number) => {
-    try {
-      const res = await fetch("/api/admin/books", { method: "DELETE", headers, body: JSON.stringify({ id }) });
-      if (!res.ok) throw new Error((await res.json()).error);
-      await fetchBooks(); setDeleteBookConfirm(null); showToast("Deleted ✓");
-    } catch { showToast("Delete failed", "error"); }
-  };
-
-  // ── Popups CRUD ────────────────────────────────────────────
-  const savePopups = async (updated: PopupItem[]) => {
-    setSavingPopup(true);
-    try {
-      const res = await fetch("/api/admin/popup", { method: "POST", headers, body: JSON.stringify({ popups: updated }) });
-      if (!res.ok) throw new Error((await res.json()).error);
-      setPopups(updated); showToast("Saved ✓");
-    } catch (e: unknown) { showToast(e instanceof Error ? e.message : "Save failed", "error"); }
-    finally { setSavingPopup(false); }
-  };
-
-  const handleAddPopup = async () => {
-    if (!newPopup.title && !newPopup.image) { showToast("Add a title or image", "error"); return; }
-    await savePopups([...popups, { ...newPopup, id: Date.now() }]);
-    setNewPopup(EMPTY_POPUP); setShowAddPopup(false);
-  };
-
-  const handleSavePopup = async (updated: PopupItem) => {
-    await savePopups(popups.map(p => p.id === updated.id ? updated : p));
-    setEditingPopupId(null);
-  };
-
-  const handleDeletePopup = async (id: number) => {
-    await savePopups(popups.filter(p => p.id !== id));
-    setDeletePopupConfirm(null);
-  };
-
-  const handleTogglePopup = async (popup: PopupItem) => {
-    await savePopups(popups.map(p => p.id === popup.id ? { ...p, enabled: !p.enabled } : p));
-  };
-
-  // ── Testimonials CRUD ──────────────────────────────────────
-  const saveTestimonials = async (updated: string[]) => {
-    setSavingTestimonials(true);
-    try {
-      const res = await fetch("/api/admin/testimonials", {
-        method: "POST",
-        headers,
-        body: JSON.stringify({ screenshots: updated }),
-      });
-      if (!res.ok) throw new Error((await res.json()).error);
-      setTestimonials(updated);
-      showToast("Testimonials saved ✓");
-    } catch (e: unknown) {
-      showToast(e instanceof Error ? e.message : "Save failed", "error");
+      const data = await api("/api/admin/content", { method: "PUT", body: JSON.stringify({ content: draft, sha, message: message || undefined }) });
+      setPublished(draft);
+      setSha(data.sha);
+      setRestored(null);
+      setPublishOpen(false);
+      setLastPublished(new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }));
+      try {
+        localStorage.removeItem(DRAFT_KEY);
+      } catch {}
+      toast("Published! 🎉 The live site updates in about 1–2 minutes.");
+    } catch (e) {
+      const status = (e as { status?: number }).status;
+      toast(status === 409 ? "Someone else changed the site meanwhile. Reload to get the latest, then redo your change." : e instanceof Error ? e.message : "Publish failed", "error");
     } finally {
-      setSavingTestimonials(false);
+      setPublishing(false);
     }
   };
 
-  const handleAddTestimonial = async (imagePath: string) => {
-    await saveTestimonials([...testimonials, imagePath]);
+  const discard = () => {
+    if (!published || !confirm("Throw away all unpublished changes?")) return;
+    if (draftRef.current) past.current.push(draftRef.current);
+    commit(published);
+    setRestored(null);
+    toast("Changes discarded", "info");
   };
 
-  const handleDeleteTestimonial = async (index: number) => {
-    await saveTestimonials(testimonials.filter((_, i) => i !== index));
-    setDeleteTestimonialConfirm(null);
+  const go = (id: string) => {
+    setTab(id);
+    setMenuOpen(false);
+    const n = NAV.find((x) => x.id === id);
+    if (n?.page) setPreviewPage(n.page);
+    else if (n?.scroll) setPreviewPage("/");
+    mainRef.current?.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   // ── Render ─────────────────────────────────────────────────
+  if (loadError) {
+    return (
+      <Center>
+        <Icon name="alert" className="w-10 h-10 text-amber-400 mb-4" />
+        <p className="font-bold mb-1">Couldn&apos;t load the website content</p>
+        <p className="text-white/50 text-sm mb-6 max-w-sm text-center">{loadError}</p>
+        <div className="flex gap-2">
+          <Btn variant="primary" onClick={load}>Try again</Btn>
+          <Btn onClick={() => onLogout()}>Log out</Btn>
+        </div>
+      </Center>
+    );
+  }
+  if (!draft || !published) {
+    return (
+      <Center>
+        <span className="w-8 h-8 border-2 border-white/15 border-t-[#ff1a1a] rounded-full animate-spin mb-4" />
+        <p className="text-white/50 text-sm">Loading your website…</p>
+      </Center>
+    );
+  }
+
+  const current = NAV.find((n) => n.id === tab)!;
+  const props = { c: draft, set };
+  const panel = {
+    overview: <OverviewPanel {...props} go={go} lastPublished={lastPublished} />,
+    layout: <LayoutPanel {...props} />,
+    hero: <HeroPanel {...props} />,
+    stats: <StatsPanel {...props} />,
+    products: <ProductsPanel {...props} />,
+    testimonials: <TestimonialsPanel {...props} />,
+    booking: <BookingPanel {...props} />,
+    popups: <PopupsPanel {...props} />,
+    courses: <CoursesPagePanel {...props} />,
+    header: <HeaderFooterPanel {...props} />,
+    settings: <SettingsPanel {...props} />,
+  }[tab];
+
+  const changedAreas = NAV.filter((n) => n.keys.some((k) => dirtyKeys.has(k)));
+
+  const sidebar = (
+    <nav className="flex flex-col gap-0.5 p-3">
+      {NAV.map((n) => {
+        const changed = n.keys.some((k) => dirtyKeys.has(k));
+        const on = tab === n.id;
+        return (
+          <button
+            key={n.id}
+            onClick={() => go(n.id)}
+            className={`relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-left transition-all ${on ? "bg-white text-black font-semibold shadow-lg" : "text-white/60 hover:text-white hover:bg-white/5"}`}
+          >
+            <Icon name={n.icon} className="w-[18px] h-[18px] shrink-0" />
+            <span className="flex-1 truncate">{n.label}</span>
+            {changed && <span className={`w-2 h-2 rounded-full ${on ? "bg-[#d40000]" : "bg-amber-400"} shadow-[0_0_8px_currentColor]`} title="Unpublished changes" />}
+          </button>
+        );
+      })}
+    </nav>
+  );
+
   return (
-    <div className="min-h-screen bg-black text-white">
-
-      {toast && (
-        <div className={`fixed top-5 right-5 z-50 px-5 py-3 rounded-xl text-sm font-semibold shadow-2xl border ${
-          toast.type === "success" ? "bg-green-950 border-green-800 text-green-300" : "bg-red-950 border-red-800 text-red-300"
-        }`}>{toast.msg}</div>
-      )}
-
-      <input ref={fileInputRef} type="file" accept="image/*" className="hidden"
-        onChange={(e) => {
-          const file = e.target.files?.[0];
-          if (file && uploadingFor) { setCropFile(file); setCropTarget(uploadingFor); }
-          e.target.value = "";
-        }}
-      />
-
-      {cropFile && cropTarget && (
-        <ImageCropper file={cropFile}
-          onCropComplete={(f) => { setCropFile(null); handleImageUpload(f, cropTarget); setCropTarget(null); }}
-          onCancel={() => { setCropFile(null); setCropTarget(null); setUploadingFor(null); }}
-        />
-      )}
-
-      {/* Header */}
-      <header className="sticky top-0 z-40 border-b border-[#1a1a1a] bg-black/90 backdrop-blur-sm">
-        <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div>
-            <p className="text-base font-black tracking-tight">ASHISH CHHIPA</p>
-            <p className="text-[9px] font-bold tracking-[3px] text-[#7f0000] uppercase">Admin Panel</p>
+    <UploadCtx.Provider value={uploadCtx}>
+      <style>{`
+        .admin-fade { animation: adminIn .45s var(--ease-out-expo) both; }
+        @keyframes adminIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+      `}</style>
+      <div className="h-dvh flex flex-col bg-[#060606] text-white overflow-hidden">
+        {/* Top bar */}
+        <header className="shrink-0 h-16 flex items-center gap-3 px-3 sm:px-5 border-b border-white/[0.06] bg-black/60 backdrop-blur-xl z-30">
+          <button className="lg:hidden w-10 h-10 grid place-items-center rounded-xl hover:bg-white/5" onClick={() => setMenuOpen(true)} aria-label="Menu">
+            <Icon name="menu" className="w-5 h-5" />
+          </button>
+          <div className="flex items-center gap-2.5 min-w-0">
+            <span className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#ff1a1a] to-[#5a0000] grid place-items-center text-xs font-black shadow-[0_0_20px_rgba(255,26,26,0.4)]">AC</span>
+            <div className="hidden sm:block leading-tight">
+              <p className="text-sm font-black tracking-tight">Website Studio</p>
+              <p className="text-[10px] text-white/40">{current.label}</p>
+            </div>
           </div>
-          <nav className="flex items-center gap-1 bg-[#111] rounded-xl p-1 border border-[#1a1a1a]">
-            {(["books", "popup", "testimonials"] as Tab[]).map(t => (
-              <button key={t} onClick={() => setTab(t)}
-                className={`px-5 py-1.5 rounded-lg text-xs font-bold transition-all ${tab === t ? "bg-white text-black" : "text-[#555] hover:text-white"}`}>
-                {t === "books" ? "📚 Products" : t === "popup" ? "📣 Popups" : "⭐ Testimonials"}
-              </button>
-            ))}
-          </nav>
-          <button onClick={onLogout} className="text-[#444] hover:text-white text-xs transition-colors flex items-center gap-1.5">
-            <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 fill-current"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>
-            Logout
+
+          <div className="flex-1" />
+
+          <div className="flex items-center gap-1">
+            <button onClick={undo} disabled={!history.undo} title="Undo (Ctrl+Z)" className="w-9 h-9 grid place-items-center rounded-lg text-white/60 hover:text-white hover:bg-white/5 disabled:opacity-25">
+              <Icon name="undo" />
+            </button>
+            <button onClick={redo} disabled={!history.redo} title="Redo (Ctrl+Shift+Z)" className="w-9 h-9 grid place-items-center rounded-lg text-white/60 hover:text-white hover:bg-white/5 disabled:opacity-25">
+              <Icon name="redo" />
+            </button>
+          </div>
+
+          <span className={`hidden md:inline-flex items-center gap-2 text-xs px-3 py-1.5 rounded-full border ${dirty ? "border-amber-400/30 text-amber-300 bg-amber-400/10" : "border-emerald-500/30 text-emerald-400 bg-emerald-500/10"}`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${dirty ? "bg-amber-400 animate-pulse" : "bg-emerald-400"}`} />
+            {dirty ? `${changedAreas.length} area${changedAreas.length === 1 ? "" : "s"} changed` : "All published"}
+          </span>
+
+          {dirty && (
+            <button onClick={discard} className="hidden sm:block text-xs text-white/50 hover:text-white px-2">
+              Discard
+            </button>
+          )}
+
+          <button
+            onClick={() => setShowPreview((s) => !s)}
+            className={`hidden xl:grid w-9 h-9 place-items-center rounded-lg transition ${showPreview ? "text-white bg-white/10" : "text-white/50 hover:text-white hover:bg-white/5"}`}
+            title="Toggle preview"
+          >
+            <Icon name="panel" />
+          </button>
+          <a href="/" target="_blank" className="hidden sm:grid w-9 h-9 place-items-center rounded-lg text-white/60 hover:text-white hover:bg-white/5" title="Open live website">
+            <Icon name="external" />
+          </a>
+
+          <button
+            onClick={() => setPublishOpen(true)}
+            disabled={!dirty}
+            className="relative inline-flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-xl text-sm font-bold bg-[#d40000] text-white hover:bg-[#ff1a1a] shadow-[0_8px_24px_-8px_rgba(255,26,26,0.8)] disabled:bg-white/10 disabled:text-white/40 disabled:shadow-none transition-all active:scale-95"
+          >
+            <Icon name="rocket" />
+            <span>Publish</span>
+            {dirty && <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-amber-400 border-2 border-[#060606] animate-pulse" />}
+          </button>
+
+          <button onClick={() => onLogout()} title="Log out" className="hidden sm:grid w-9 h-9 place-items-center rounded-lg text-white/50 hover:text-white hover:bg-white/5">
+            <Icon name="logout" />
+          </button>
+        </header>
+
+        <div className="flex-1 flex min-h-0">
+          {/* Sidebar (desktop) */}
+          <aside className="hidden lg:flex flex-col w-60 shrink-0 border-r border-white/[0.06] overflow-y-auto">
+            {sidebar}
+            <div className="mt-auto p-4 text-[11px] text-white/30 leading-relaxed">
+              <p className="mb-1 font-semibold text-white/50">Tips</p>
+              Ctrl/⌘ + Z to undo · Ctrl/⌘ + S to publish
+            </div>
+          </aside>
+
+          {/* Mobile drawer */}
+          <div className={`lg:hidden fixed inset-0 z-50 transition ${menuOpen ? "visible" : "invisible"}`}>
+            <div className={`absolute inset-0 bg-black/70 backdrop-blur-sm transition-opacity ${menuOpen ? "opacity-100" : "opacity-0"}`} onClick={() => setMenuOpen(false)} />
+            <div className={`absolute left-0 top-0 bottom-0 w-72 bg-[#0b0b0b] border-r border-white/10 overflow-y-auto transition-transform duration-300 ease-out-expo ${menuOpen ? "translate-x-0" : "-translate-x-full"}`}>
+              <div className="flex items-center justify-between p-4 border-b border-white/5">
+                <p className="font-black">Website Studio</p>
+                <button onClick={() => setMenuOpen(false)} className="w-9 h-9 grid place-items-center rounded-lg hover:bg-white/5"><Icon name="x" /></button>
+              </div>
+              {sidebar}
+              <div className="p-3 border-t border-white/5 space-y-1">
+                {dirty && <button onClick={discard} className="w-full text-left px-3 py-2.5 rounded-xl text-sm text-white/60 hover:bg-white/5">Discard changes</button>}
+                <a href="/" target="_blank" className="block px-3 py-2.5 rounded-xl text-sm text-white/60 hover:bg-white/5">Open live website ↗</a>
+                <button onClick={() => onLogout()} className="w-full text-left px-3 py-2.5 rounded-xl text-sm text-white/60 hover:bg-white/5">Log out</button>
+              </div>
+            </div>
+          </div>
+
+          {/* Editor */}
+          <main ref={mainRef} className="flex-1 min-w-0 overflow-y-auto">
+            <div className="max-w-3xl mx-auto px-4 sm:px-8 py-6 sm:py-10 pb-28 lg:pb-10">
+              {restored && (
+                <div className="mb-6 rounded-2xl border border-sky-500/30 bg-sky-500/10 p-4 flex flex-col sm:flex-row sm:items-center gap-3 admin-fade">
+                  <Icon name="refresh" className="w-5 h-5 text-sky-400 shrink-0" />
+                  <p className="text-sm flex-1">We brought back your unpublished changes from <b>{restored}</b>.</p>
+                  <div className="flex gap-2">
+                    <Btn small onClick={() => setRestored(null)}>Keep them</Btn>
+                    <Btn small variant="danger" onClick={() => { commit(published); setRestored(null); }}>Throw away</Btn>
+                  </div>
+                </div>
+              )}
+              <div key={tab} className="admin-fade">{panel}</div>
+            </div>
+          </main>
+
+          {/* Live preview (wide screens) */}
+          {showPreview && (
+            <aside className="hidden xl:flex flex-col w-[44%] max-w-[760px] shrink-0 border-l border-white/[0.06] bg-black">
+              <LivePreview content={draft} assets={assets} page={previewPage} scrollTo={current.scroll} onPage={setPreviewPage} />
+            </aside>
+          )}
+        </div>
+
+        {/* Mobile bottom bar */}
+        <div className="xl:hidden fixed bottom-0 inset-x-0 z-30 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] bg-gradient-to-t from-black via-black/95 to-transparent lg:left-60">
+          <button onClick={() => setMobilePreview(true)} className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl border border-white/15 bg-white/5 backdrop-blur text-sm font-semibold active:scale-[0.98] transition">
+            <Icon name="eye" /> Preview my changes
           </button>
         </div>
-      </header>
-
-      <main className="max-w-5xl mx-auto px-6 py-10">
-
-        {/* ── BOOKS TAB ── */}
-        {tab === "books" && (
-          <div>
-            <div className="flex items-center justify-between mb-8">
-              <div>
-                <h1 className="text-2xl font-black">Products</h1>
-                <p className="text-[#444] text-sm mt-0.5">{books.filter(b => !b.hidden).length} visible · {books.filter(b => b.hidden).length} hidden</p>
-              </div>
-              <button onClick={() => { setShowAddBook(true); setEditingBook(null); }}
-                className="flex items-center gap-2 bg-white text-black font-bold px-5 py-2.5 rounded-xl text-sm hover:bg-gray-100 transition-all hover:scale-105 active:scale-95">
-                <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
-                Add Book
-              </button>
-            </div>
-
-            {showAddBook && (
-              <BookForm book={newBook} isNew saving={saving} uploadingFor={uploadingFor}
-                onUpload={t => { setUploadingFor(t); fileInputRef.current?.click(); }}
-                onChange={(f, v) => setNewBook(p => ({ ...p, [f]: v }))}
-                onSave={handleAddBook} onCancel={() => { setShowAddBook(false); setNewBook(EMPTY_BOOK); }} />
-            )}
-
-            {loadingBooks ? (
-              <div className="flex justify-center py-24"><span className="w-7 h-7 border-2 border-[#333] border-t-white rounded-full animate-spin" /></div>
-            ) : (
-              <div className="space-y-3">
-                {books.map(book => (
-                  <div key={book.id}>
-                    {editingBook?.id === book.id ? (
-                      <BookForm book={editingBook} saving={saving} uploadingFor={uploadingFor}
-                        onUpload={t => { setUploadingFor(t); fileInputRef.current?.click(); }}
-                        onChange={(f, v) => setEditingBook(p => p ? { ...p, [f]: v } : p)}
-                        onSave={handleSaveEditBook} onCancel={() => setEditingBook(null)} />
-                    ) : (
-                      <BookRow book={book}
-                        onEdit={() => { setEditingBook(book); setShowAddBook(false); }}
-                        onToggleHidden={() => handleToggleHidden(book)}
-                        onDelete={() => setDeleteBookConfirm(book.id)} />
-                    )}
-                    {deleteBookConfirm === book.id && (
-                      <div className="mt-2 bg-red-950/30 border border-red-900/40 rounded-xl px-5 py-4 flex items-center justify-between">
-                        <p className="text-red-400 text-sm">Delete &ldquo;{book.title}&rdquo;?</p>
-                        <div className="flex gap-2">
-                          <button onClick={() => setDeleteBookConfirm(null)} className="px-4 py-2 text-sm text-[#666] hover:text-white border border-[#333] rounded-lg">Cancel</button>
-                          <button onClick={() => handleDeleteBook(book.id)} className="px-4 py-2 text-sm bg-red-700 hover:bg-red-600 text-white font-bold rounded-lg">Delete</button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
+        {mobilePreview && (
+          <div className="xl:hidden fixed inset-0 z-[60] bg-black flex flex-col admin-fade">
+            <LivePreview content={draft} assets={assets} page={previewPage} scrollTo={current.scroll} onPage={setPreviewPage} onClose={() => setMobilePreview(false)} />
           </div>
         )}
 
-        {/* ── POPUP TAB ── */}
-        {tab === "popup" && (
-          <div className="max-w-xl">
-            <div className="flex items-center justify-between mb-8">
-              <div>
-                <h1 className="text-2xl font-black">Popups</h1>
-                <p className="text-[#444] text-sm mt-0.5">{popups.filter(p => p.enabled).length} active · shown one after another on page load</p>
-              </div>
-              <button onClick={() => { setShowAddPopup(true); setEditingPopupId(null); }}
-                className="flex items-center gap-2 bg-white text-black font-bold px-5 py-2.5 rounded-xl text-sm hover:bg-gray-100 transition-all hover:scale-105 active:scale-95">
-                <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
-                New Popup
-              </button>
+        {/* Publish dialog */}
+        {publishOpen && <PublishDialog areas={changedAreas.map((a) => a.label)} busy={publishing} onCancel={() => setPublishOpen(false)} onPublish={publish} />}
+
+        {/* Toasts */}
+        <div className="fixed top-20 right-4 left-4 sm:left-auto z-[200] flex flex-col gap-2 items-end pointer-events-none">
+          {toasts.map((t) => (
+            <div
+              key={t.id}
+              className={`pointer-events-auto max-w-sm px-4 py-3 rounded-xl text-sm font-medium shadow-2xl border backdrop-blur-xl admin-fade ${
+                t.type === "success" ? "bg-emerald-950/90 border-emerald-700/50 text-emerald-200" : t.type === "error" ? "bg-red-950/90 border-red-700/50 text-red-200" : "bg-white/10 border-white/15 text-white"
+              }`}
+            >
+              {t.msg}
             </div>
-
-            {loadingPopup ? (
-              <div className="flex justify-center py-20"><span className="w-7 h-7 border-2 border-[#333] border-t-white rounded-full animate-spin" /></div>
-            ) : (
-              <div className="space-y-3">
-                {showAddPopup && (
-                  <PopupForm popup={newPopup} isNew saving={savingPopup} uploadingFor={uploadingFor}
-                    onUpload={() => { setUploadingFor("newpopup"); fileInputRef.current?.click(); }}
-                    onChange={(f, v) => setNewPopup(p => ({ ...p, [f]: v }))}
-                    onSave={handleAddPopup} onCancel={() => { setShowAddPopup(false); setNewPopup(EMPTY_POPUP); }} />
-                )}
-
-                {popups.length === 0 && !showAddPopup && (
-                  <div className="text-center py-16 text-[#444] text-sm">No popups yet. Click &ldquo;New Popup&rdquo; to create one.</div>
-                )}
-
-                {popups.map((popup, i) => (
-                  <div key={popup.id}>
-                    {editingPopupId === popup.id ? (
-                      <PopupForm popup={popup} saving={savingPopup} uploadingFor={uploadingFor}
-                        onUpload={() => { setUploadingFor(`popup-${popup.id}`); fileInputRef.current?.click(); }}
-                        onChange={(f, v) => setPopups(ps => ps.map(p => p.id === popup.id ? { ...p, [f]: v } : p))}
-                        onSave={() => handleSavePopup(popups.find(p => p.id === popup.id)!)}
-                        onCancel={() => setEditingPopupId(null)} />
-                    ) : (
-                      <PopupRow popup={popup} index={i} total={popups.length}
-                        onEdit={() => { setEditingPopupId(popup.id); setShowAddPopup(false); }}
-                        onToggle={() => handleTogglePopup(popup)}
-                        onDelete={() => setDeletePopupConfirm(popup.id)} />
-                    )}
-                    {deletePopupConfirm === popup.id && (
-                      <div className="mt-2 bg-red-950/30 border border-red-900/40 rounded-xl px-5 py-4 flex items-center justify-between">
-                        <p className="text-red-400 text-sm">Delete &ldquo;{popup.title || "this popup"}&rdquo;?</p>
-                        <div className="flex gap-2">
-                          <button onClick={() => setDeletePopupConfirm(null)} className="px-4 py-2 text-sm text-[#666] hover:text-white border border-[#333] rounded-lg">Cancel</button>
-                          <button onClick={() => handleDeletePopup(popup.id)} className="px-4 py-2 text-sm bg-red-700 hover:bg-red-600 text-white font-bold rounded-lg">Delete</button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ── TESTIMONIALS TAB ── */}
-        {tab === "testimonials" && (
-          <div>
-            <div className="flex items-center justify-between mb-8">
-              <div>
-                <h1 className="text-2xl font-black">Testimonials</h1>
-                <p className="text-[#444] text-sm mt-0.5">{testimonials.length} testimonial{testimonials.length !== 1 ? "s" : ""} · client feedback screenshots</p>
-              </div>
-              <button
-                onClick={() => {
-                  setUploadingFor("newtestimonial");
-                  fileInputRef.current?.click();
-                }}
-                disabled={uploadingFor !== null}
-                className="flex items-center gap-2 bg-white text-black font-bold px-5 py-2.5 rounded-xl text-sm hover:bg-gray-100 transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:scale-100"
-              >
-                {uploadingFor === "newtestimonial" ? (
-                  <>
-                    <span className="w-4 h-4 border-2 border-black/20 border-t-black rounded-full animate-spin" />
-                    Uploading...
-                  </>
-                ) : (
-                  <>
-                    <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current">
-                      <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
-                    </svg>
-                    Upload Screenshot
-                  </>
-                )}
-              </button>
-            </div>
-
-            {loadingTestimonials ? (
-              <div className="flex justify-center py-24">
-                <span className="w-7 h-7 border-2 border-[#333] border-t-white rounded-full animate-spin" />
-              </div>
-            ) : testimonials.length === 0 ? (
-              <div className="text-center py-16 text-[#444] text-sm">
-                No testimonials yet. Click &ldquo;Upload Screenshot&rdquo; to add your first one.
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                {testimonials.map((img, index) => (
-                  <div key={index} className="group relative aspect-[3/4] rounded-xl overflow-hidden bg-[#0a0a0a] border border-[#222] hover:border-[#444] transition-all">
-                    <Image
-                      src={img}
-                      alt={`Testimonial ${index + 1}`}
-                      fill
-                      className="object-cover"
-                    />
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/70 transition-all flex items-center justify-center">
-                      <button
-                        onClick={() => setDeleteTestimonialConfirm(index)}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity bg-red-600 hover:bg-red-700 text-white font-bold px-4 py-2 rounded-lg text-sm flex items-center gap-2"
-                      >
-                        <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current">
-                          <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" />
-                        </svg>
-                        Delete
-                      </button>
-                    </div>
-                    {deleteTestimonialConfirm === index && (
-                      <div className="absolute inset-0 bg-black/90 flex flex-col items-center justify-center p-4 gap-3">
-                        <p className="text-red-400 text-sm text-center font-semibold">Delete this testimonial?</p>
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => setDeleteTestimonialConfirm(null)}
-                            className="px-3 py-1.5 text-xs text-[#666] hover:text-white border border-[#333] rounded-lg"
-                          >
-                            Cancel
-                          </button>
-                          <button
-                            onClick={() => handleDeleteTestimonial(index)}
-                            disabled={savingTestimonials}
-                            className="px-3 py-1.5 text-xs bg-red-700 hover:bg-red-600 text-white font-bold rounded-lg disabled:opacity-50"
-                          >
-                            {savingTestimonials ? "Deleting..." : "Delete"}
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-      </main>
-    </div>
-  );
-}
-
-// ── Popup Row ─────────────────────────────────────────────────
-function PopupRow({ popup, index, total, onEdit, onToggle, onDelete }: {
-  popup: PopupItem; index: number; total: number;
-  onEdit: () => void; onToggle: () => void; onDelete: () => void;
-}) {
-  return (
-    <div className={`flex items-center gap-4 bg-[#0a0a0a] border rounded-2xl px-5 py-4 transition-all ${popup.enabled ? "border-[#222]" : "border-[#1a1a1a] opacity-50"}`}>
-      <div className="w-7 h-7 rounded-full bg-[#111] border border-[#333] flex items-center justify-center text-[#555] text-xs font-bold shrink-0">{index + 1}</div>
-      <div className="relative w-14 h-9 rounded-lg overflow-hidden bg-[#111] border border-[#222] shrink-0">
-        {popup.image ? <Image src={popup.image} alt="" fill className="object-cover" />
-          : <div className="w-full h-full flex items-center justify-center text-[#333]"><svg viewBox="0 0 24 24" className="w-4 h-4 fill-current"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg></div>}
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="font-bold text-white text-sm truncate">{popup.title || <span className="text-[#444] italic">Untitled</span>}</p>
-        <p className="text-[#555] text-xs truncate">{popup.description || (popup.buttonText ? `Button: ${popup.buttonText}` : "No content")}</p>
-      </div>
-      <span className={`text-[9px] font-bold tracking-widest uppercase px-2.5 py-1 rounded-full shrink-0 ${popup.enabled ? "bg-green-950 text-green-500 border border-green-900" : "bg-[#111] text-[#444] border border-[#222]"}`}>
-        {popup.enabled ? `${index + 1} of ${total}` : "Off"}
-      </span>
-      <div className="flex items-center gap-1.5 shrink-0">
-        <ActionBtn onClick={onToggle} title={popup.enabled ? "Disable" : "Enable"}>
-          {popup.enabled
-            ? <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
-            : <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current"><path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27z"/></svg>}
-        </ActionBtn>
-        <ActionBtn onClick={onEdit} title="Edit"><svg viewBox="0 0 24 24" className="w-4 h-4 fill-current"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg></ActionBtn>
-        <ActionBtn onClick={onDelete} title="Delete" danger><svg viewBox="0 0 24 24" className="w-4 h-4 fill-current"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg></ActionBtn>
-      </div>
-    </div>
-  );
-}
-
-// ── Popup Form ────────────────────────────────────────────────
-function PopupForm({ popup, isNew = false, saving, uploadingFor, onUpload, onChange, onSave, onCancel }: {
-  popup: Omit<PopupItem, "id"> & { id?: number }; isNew?: boolean; saving: boolean;
-  uploadingFor: UploadTarget | null; onUpload: () => void;
-  onChange: (field: string, value: string | boolean) => void;
-  onSave: () => void; onCancel: () => void;
-}) {
-  const isUploading = uploadingFor === "newpopup" || (popup.id && uploadingFor === `popup-${popup.id}`);
-  return (
-    <div className="bg-[#0d0d0d] border-2 border-[#7f0000]/30 rounded-2xl p-6 mb-3">
-      <p className="text-xs font-bold tracking-widest text-[#7f0000] uppercase mb-5">{isNew ? "New Popup" : "Edit Popup"}</p>
-      <div className="space-y-4">
-        <Field label="Image">
-          <div className="flex items-center gap-3">
-            {popup.image && <div className="relative w-20 h-12 rounded-lg overflow-hidden border border-[#333] shrink-0"><Image src={popup.image} alt="" fill className="object-cover" /></div>}
-            <button onClick={onUpload} disabled={uploadingFor !== null}
-              className="flex-1 flex items-center justify-center gap-2 bg-[#111] border border-[#333] hover:border-[#555] rounded-xl px-4 py-2.5 text-sm text-[#888] hover:text-white transition-all disabled:opacity-50">
-              {isUploading ? <><span className="w-3 h-3 border-2 border-white/20 border-t-white rounded-full animate-spin" />Uploading…</>
-                : <><svg viewBox="0 0 24 24" className="w-4 h-4 fill-current"><path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"/></svg>{popup.image ? "Replace Image" : "Upload Image"}</>}
-            </button>
-            {popup.image && <button onClick={() => onChange("image", "")} className="text-[#555] hover:text-red-500 text-xs transition-colors">Remove</button>}
-          </div>
-        </Field>
-        <Field label="Title"><input value={popup.title} onChange={e => onChange("title", e.target.value)} placeholder="e.g. New Playbook Just Dropped 🔥" className="input-field" /></Field>
-        <Field label="Description"><textarea value={popup.description} onChange={e => onChange("description", e.target.value)} placeholder="Short announcement..." rows={3} className="input-field resize-none" /></Field>
-        <Field label="Button Text"><input value={popup.buttonText} onChange={e => onChange("buttonText", e.target.value)} placeholder="e.g. Buy Now" className="input-field" /></Field>
-        <Field label="Button Link"><input value={popup.buttonLink} onChange={e => onChange("buttonLink", e.target.value)} placeholder="https://rzp.io/rzp/..." className="input-field font-mono text-xs" /></Field>
-        <Field label="Button Style">
-          <div className="flex gap-2">
-            {(["red", "white", "black"] as const).map(s => (
-              <button key={s} onClick={() => onChange("buttonStyle", s)}
-                className={`flex-1 py-2.5 rounded-xl text-xs font-bold capitalize border transition-all ${
-                  popup.buttonStyle === s
-                    ? s === "red" ? "bg-[#7f0000] border-[#7f0000] text-white" : s === "white" ? "bg-white border-white text-black" : "bg-[#111] border-white text-white"
-                    : "border-[#333] text-[#555] hover:border-[#555] hover:text-white bg-transparent"
-                }`}>{s}</button>
-            ))}
-          </div>
-        </Field>
-        <Field label="Status">
-          <label className="flex items-center gap-3 cursor-pointer h-[42px]">
-            <div onClick={() => onChange("enabled", !popup.enabled)} className={`relative w-10 h-5 rounded-full transition-colors cursor-pointer ${popup.enabled ? "bg-[#7f0000]" : "bg-[#333]"}`}>
-              <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${popup.enabled ? "translate-x-5" : "translate-x-0.5"}`} />
-            </div>
-            <span className="text-sm text-[#888]">{popup.enabled ? "Active (shown on site)" : "Inactive (hidden)"}</span>
-          </label>
-        </Field>
-      </div>
-      <div className="flex gap-3 mt-6">
-        <button onClick={onSave} disabled={saving} className="bg-white text-black font-bold px-7 py-3 rounded-xl text-sm hover:bg-gray-100 transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:scale-100 flex items-center gap-2">
-          {saving ? <><span className="w-3 h-3 border-2 border-black/20 border-t-black rounded-full animate-spin" />Saving…</> : "Save Popup"}
-        </button>
-        <button onClick={onCancel} className="px-5 py-3 text-sm text-[#555] hover:text-white border border-[#222] hover:border-[#444] rounded-xl transition-all">Cancel</button>
-      </div>
-    </div>
-  );
-}
-
-// ── Book Row ──────────────────────────────────────────────────
-function BookRow({ book, onEdit, onToggleHidden, onDelete }: {
-  book: Book; onEdit: () => void; onToggleHidden: () => void; onDelete: () => void;
-}) {
-  return (
-    <div className={`flex items-center gap-4 bg-[#0a0a0a] border rounded-2xl px-5 py-4 transition-all ${book.hidden ? "border-[#1a1a1a] opacity-50" : "border-[#222] hover:border-[#2a2a2a]"}`}>
-      <div className="relative w-12 h-16 rounded-lg overflow-hidden bg-[#111] border border-[#222] shrink-0">
-        {book.image ? <Image src={book.image} alt={book.title} fill className="object-cover" />
-          : <div className="w-full h-full flex items-center justify-center text-[#333]"><svg viewBox="0 0 24 24" className="w-5 h-5 fill-current"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg></div>}
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-0.5">
-          <span className="text-[9px] font-bold tracking-widest text-[#7f0000] uppercase">{book.tag}</span>
-          {book.hidden && <span className="text-[9px] font-bold tracking-widest text-[#444] uppercase">· Hidden</span>}
+          ))}
         </div>
-        <p className="font-bold text-white text-sm truncate">{book.title}</p>
-        <p className="text-[#555] text-xs truncate">{book.subtitle}</p>
       </div>
-      <p className="text-white font-bold text-sm shrink-0 hidden sm:block">{book.price}</p>
-      <div className="flex items-center gap-1.5 shrink-0">
-        <ActionBtn onClick={onToggleHidden} title={book.hidden ? "Show" : "Hide"}>
-          {book.hidden
-            ? <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
-            : <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current"><path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27z"/></svg>}
-        </ActionBtn>
-        <ActionBtn onClick={onEdit} title="Edit"><svg viewBox="0 0 24 24" className="w-4 h-4 fill-current"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg></ActionBtn>
-        <ActionBtn onClick={onDelete} title="Delete" danger><svg viewBox="0 0 24 24" className="w-4 h-4 fill-current"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg></ActionBtn>
-      </div>
-    </div>
+    </UploadCtx.Provider>
   );
 }
 
-// ── Book Form ─────────────────────────────────────────────────
-function BookForm({ book, isNew = false, saving, uploadingFor, onUpload, onChange, onSave, onCancel }: {
-  book: Omit<Book, "id"> & { id?: number }; isNew?: boolean; saving: boolean;
-  uploadingFor: UploadTarget | null;
-  onUpload: (target: "edit" | "new") => void;
-  onChange: (field: string, value: string | boolean) => void;
-  onSave: () => void; onCancel: () => void;
-}) {
-  const target = isNew ? "new" : "edit";
-  return (
-    <div className="bg-[#0d0d0d] border-2 border-[#7f0000]/30 rounded-2xl p-6 mb-3">
-      <p className="text-xs font-bold tracking-widest text-[#7f0000] uppercase mb-5">{isNew ? "New Book" : "Edit Book"}</p>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Field label="Title *"><input value={book.title} onChange={e => onChange("title", e.target.value)} placeholder="e.g. Opener Vault" className="input-field" /></Field>
-        <Field label="Subtitle"><input value={book.subtitle} onChange={e => onChange("subtitle", e.target.value)} placeholder="e.g. 50 Proven Openers" className="input-field" /></Field>
-        <Field label="Payment Link *"><input value={book.href} onChange={e => onChange("href", e.target.value)} placeholder="https://rzp.io/rzp/..." className="input-field font-mono text-xs" /></Field>
-        <Field label="Price"><input value={book.price} onChange={e => onChange("price", e.target.value)} placeholder="₹299" className="input-field" /></Field>
-        <Field label="Tag">
-          <select value={book.tag} onChange={e => onChange("tag", e.target.value)} className="input-field">
-            {TAG_OPTIONS.map(t => <option key={t} value={t}>{t}</option>)}
-          </select>
-        </Field>
-        <Field label="Tag Color">
-          <select value={book.tagColor} onChange={e => onChange("tagColor", e.target.value)} className="input-field">
-            {TAG_COLOR_OPTIONS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
-          </select>
-        </Field>
-        <Field label="Book Cover">
-          <div className="flex items-center gap-3">
-            {book.image && <div className="relative w-9 h-12 rounded-lg overflow-hidden border border-[#333] shrink-0"><Image src={book.image} alt="cover" fill className="object-cover" /></div>}
-            <button onClick={() => onUpload(target)} disabled={uploadingFor !== null}
-              className="flex-1 flex items-center justify-center gap-2 bg-[#111] border border-[#333] hover:border-[#555] rounded-xl px-4 py-2.5 text-sm text-[#888] hover:text-white transition-all disabled:opacity-50">
-              {uploadingFor === target ? <><span className="w-3 h-3 border-2 border-white/20 border-t-white rounded-full animate-spin" />Uploading…</>
-                : <><svg viewBox="0 0 24 24" className="w-4 h-4 fill-current"><path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"/></svg>{book.image ? "Replace" : "Upload Image"}</>}
-            </button>
-          </div>
-        </Field>
-        <Field label="Visibility">
-          <label className="flex items-center gap-3 cursor-pointer h-[42px]">
-            <div onClick={() => onChange("hidden", !book.hidden)} className={`relative w-10 h-5 rounded-full transition-colors cursor-pointer ${book.hidden ? "bg-[#333]" : "bg-[#7f0000]"}`}>
-              <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${book.hidden ? "translate-x-0.5" : "translate-x-5"}`} />
-            </div>
-            <span className="text-sm text-[#888]">{book.hidden ? "Hidden" : "Visible"}</span>
-          </label>
-        </Field>
-      </div>
-      <div className="flex gap-3 mt-6">
-        <button onClick={onSave} disabled={saving} className="bg-white text-black font-bold px-7 py-3 rounded-xl text-sm hover:bg-gray-100 transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:scale-100 flex items-center gap-2">
-          {saving ? <><span className="w-3 h-3 border-2 border-black/20 border-t-black rounded-full animate-spin" />Saving…</> : "Save Changes"}
-        </button>
-        <button onClick={onCancel} className="px-5 py-3 text-sm text-[#555] hover:text-white border border-[#222] hover:border-[#444] rounded-xl transition-all">Cancel</button>
-      </div>
-    </div>
-  );
+function Center({ children }: { children: React.ReactNode }) {
+  return <div className="min-h-dvh bg-[#060606] text-white flex flex-col items-center justify-center px-6">{children}</div>;
 }
 
-// ── Helpers ───────────────────────────────────────────────────
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function PublishDialog({ areas, busy, onCancel, onPublish }: { areas: string[]; busy: boolean; onCancel: () => void; onPublish: (msg: string) => void }) {
+  const [note, setNote] = useState("");
   return (
-    <div>
-      <label className="block text-[10px] font-bold tracking-widest text-[#444] uppercase mb-1.5">{label}</label>
-      {children}
+    <div className="fixed inset-0 z-[150] flex items-end sm:items-center justify-center sm:p-4">
+      <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" style={{ animation: "pop-fade .25s both" }} onClick={busy ? undefined : onCancel} />
+      <div className="relative w-full sm:max-w-md bg-[#0d0d0d] border border-white/10 rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl" style={{ animation: "pop-slide-up .4s var(--ease-out-expo) both" }}>
+        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#ff1a1a] to-[#5a0000] grid place-items-center mb-4 shadow-[0_0_30px_rgba(255,26,26,0.4)]">
+          <Icon name="rocket" className="w-6 h-6" />
+        </div>
+        <h2 className="text-xl font-black mb-1">Publish your changes?</h2>
+        <p className="text-sm text-white/50 mb-4">These parts of the website will be updated:</p>
+        <div className="flex flex-wrap gap-1.5 mb-5">
+          {areas.map((a) => (
+            <span key={a} className="text-xs px-2.5 py-1 rounded-full bg-amber-400/10 border border-amber-400/30 text-amber-200">{a}</span>
+          ))}
+        </div>
+        <label className="block text-xs text-white/50 mb-1.5">Note for yourself (optional)</label>
+        <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="e.g. Diwali sale popup" className="w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2.5 text-sm mb-5 focus:outline-none focus:border-white/30" />
+        <div className="flex gap-2">
+          <Btn onClick={onCancel} disabled={busy}>Not yet</Btn>
+          <button
+            onClick={() => onPublish(note.trim() ? `Admin: ${note.trim()}` : "")}
+            disabled={busy}
+            className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl py-3 font-bold bg-[#d40000] hover:bg-[#ff1a1a] disabled:opacity-60 transition active:scale-95"
+          >
+            {busy ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Icon name="rocket" />}
+            {busy ? "Publishing…" : "Publish now"}
+          </button>
+        </div>
+        <p className="text-[11px] text-white/30 mt-4 text-center">The live website refreshes in about 1–2 minutes after publishing.</p>
+      </div>
     </div>
-  );
-}
-
-function ActionBtn({ onClick, title, danger, children }: {
-  onClick: () => void; title: string; danger?: boolean; children: React.ReactNode;
-}) {
-  return (
-    <button onClick={onClick} title={title}
-      className={`w-8 h-8 rounded-lg border flex items-center justify-center transition-all ${
-        danger ? "border-[#222] text-[#555] hover:border-red-800 hover:text-red-500"
-               : "border-[#222] text-[#555] hover:border-[#444] hover:text-white"
-      }`}>
-      {children}
-    </button>
   );
 }

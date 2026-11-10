@@ -13,14 +13,9 @@ export default function CoursesLoader({ onComplete }: CoursesLoaderProps) {
   useEffect(() => {
     // Simulate asset loading with smooth progress increments
     const steps = [
-      { target: 18, delay: 80 },
-      { target: 35, delay: 120 },
-      { target: 52, delay: 90 },
-      { target: 68, delay: 150 },
-      { target: 80, delay: 100 },
-      { target: 91, delay: 130 },
-      { target: 97, delay: 90 },
-      { target: 100, delay: 200 },
+      { target: 35, delay: 60 },
+      { target: 70, delay: 80 },
+      { target: 100, delay: 90 },
     ];
 
     let timeout: ReturnType<typeof setTimeout>;
@@ -31,8 +26,8 @@ export default function CoursesLoader({ onComplete }: CoursesLoaderProps) {
         // Small pause at 100% then fade out
         timeout = setTimeout(() => {
           setPhase("done");
-          setTimeout(onComplete, 600);
-        }, 300);
+          setTimeout(onComplete, 500);
+        }, 150);
         return;
       }
       const { target, delay } = steps[stepIndex];
@@ -53,7 +48,7 @@ export default function CoursesLoader({ onComplete }: CoursesLoaderProps) {
       increment();
     };
 
-    timeout = setTimeout(runStep, 200);
+    timeout = setTimeout(runStep, 50);
     return () => clearTimeout(timeout);
   }, [onComplete]);
 

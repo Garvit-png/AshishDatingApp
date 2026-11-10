@@ -1,120 +1,53 @@
 "use client";
 
-import { useEffect, useRef, useCallback } from "react";
+import { useRef } from "react";
 import Image from "next/image";
-import { useIsMobile } from "@/hooks/useIsMobile";
+import { useContent } from "@/content/ContentContext";
+import { useScrollProgress } from "@/hooks/useScrollProgress";
 
 export default function EyeRollSection() {
-  const isMobile = useIsMobile();
-  const containerRef = useRef<HTMLDivElement>(null);
+  const { content, asset } = useContent();
+  const { bigText, image } = content.eyeroll;
   const imageRef = useRef<HTMLDivElement>(null);
-  const textRef = useRef<HTMLSpanElement>(null);
+  const textRef = useRef<HTMLDivElement>(null);
   const indicatorRef = useRef<HTMLDivElement>(null);
-  const rafRef = useRef<number>(0);
-  const layoutRef = useRef({ offsetTop: 0, height: 0, windowH: 0 });
 
-  useEffect(() => {
-    const updateLayout = () => {
-      if (containerRef.current) {
-        layoutRef.current = {
-          offsetTop: containerRef.current.offsetTop,
-          height: containerRef.current.offsetHeight,
-          windowH: window.innerHeight,
-        };
-      }
-    };
-    
-    // Slight delay to ensure DOM is fully laid out
-    const timeout = setTimeout(updateLayout, 100);
-    window.addEventListener("resize", updateLayout);
-    return () => {
-      clearTimeout(timeout);
-      window.removeEventListener("resize", updateLayout);
-    };
-  }, []);
-  const onScroll = useCallback(() => {
-    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+  const containerRef = useScrollProgress<HTMLDivElement>((p) => {
+    if (imageRef.current) imageRef.current.style.transform = `scale(${0.2 + p * 0.65}) rotate(${(1 - p) * -8}deg)`;
+    if (textRef.current) {
+      textRef.current.style.transform = `scale(${1 + p * 0.15})`;
+      textRef.current.style.letterSpacing = `${-0.05 + p * 0.03}em`;
+    }
+    if (indicatorRef.current) indicatorRef.current.style.opacity = `${Math.max(0, 1 - p * 3)}`;
+  });
 
-    rafRef.current = requestAnimationFrame(() => {
-      const container = containerRef.current;
-      const image = imageRef.current;
-      const text = textRef.current;
-      const indicator = indicatorRef.current;
-      if (!container || !image || !text || !indicator) return;
-
-      const { offsetTop, height, windowH } = layoutRef.current;
-      if (height === 0) return; // Not initialized yet
-
-      const scrolled = window.scrollY - offsetTop;
-      const scrollable = height - windowH;
-      const p = Math.max(0, Math.min(1, scrolled / scrollable));
-
-      const scale = 0.2 + p * 0.65;
-      image.style.transform = `scale(${scale}) translateZ(0)`;
-      text.style.opacity = `${0.80 + p * 0.1}`;
-      indicator.style.opacity = `${1 - p * 3}`;
-    });
-  }, []);
-
-  useEffect(() => {
-    window.addEventListener("scroll", onScroll, { passive: true });
-    onScroll();
-    return () => {
-      window.removeEventListener("scroll", onScroll);
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
-    };
-  }, [onScroll]);
+  const words = bigText.trim().split(/\s+/);
 
   return (
-    <div ref={containerRef} className="relative w-full" style={{ height: isMobile ? "200vh" : "300vh" }}>
-      <div className="sticky top-0 w-full h-screen bg-black flex flex-col items-center justify-center overflow-hidden">
-
-        {/* BIG RED BACKGROUND TEXT */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none z-0">
-          <span
+    <div ref={containerRef} className="relative w-full h-[200vh] md:h-[300vh]">
+      <div className="sticky top-0 w-full h-[100svh] bg-black flex items-center justify-center overflow-hidden">
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none">
+          <div
             ref={textRef}
-            className="font-black uppercase text-[#ff0000] leading-[0.9] tracking-tighter text-center"
-            style={{ fontSize: isMobile ? "28vw" : "18vw", opacity: 0.8, willChange: "opacity" }}
+            className="font-black uppercase text-accent leading-[0.85] text-center opacity-90 text-[28vw] md:text-[18vw] will-change-transform"
           >
-            {isMobile ? (
-              <>
-                DONT<br />STOP
-              </>
-            ) : (
-              "DONT STOP"
-            )}
-          </span>
-        </div>
-
-        {/* Eye Roll Photo — scales on scroll */}
-        <div
-          ref={imageRef}
-          className="relative z-10"
-          style={{
-            transform: "scale(0.2)",
-            willChange: "transform",
-            width: "60vw",
-            maxWidth: "700px",
-          }}
-        >
-          <div className="relative overflow-hidden rounded-2xl">
-            <Image
-              src="/eyeroll.webp"
-              alt="Eye Roll"
-              width={700}
-              height={700}
-              className="object-contain w-full h-auto block"
-              priority
-            />
+            {/* One word per line on phones, single line on desktop */}
+            {words.map((w, i) => (
+              <span key={i} className="block md:inline">
+                {w}
+                {i < words.length - 1 && <span className="hidden md:inline">&nbsp;</span>}
+              </span>
+            ))}
           </div>
         </div>
 
-        {/* Scroll indicator */}
-        <div
-          ref={indicatorRef}
-          className="absolute bottom-10 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2"
-          style={{ willChange: "opacity" }}
-        >
+        <div ref={imageRef} className="relative z-10 w-[70vw] md:w-[60vw] max-w-[700px] will-change-transform" style={{ transform: "scale(0.2)" }}>
+          <div className="relative overflow-hidden rounded-3xl shadow-[0_30px_120px_-20px_rgba(0,0,0,0.9)]">
+            <Image src={asset(image)} alt="" width={700} height={700} sizes="(max-width: 768px) 70vw, 700px" className="w-full h-auto block" />
+          </div>
+        </div>
+
+        <div ref={indicatorRef} className="absolute bottom-10 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2">
           <span className="text-white/50 uppercase tracking-[0.4em] text-xs font-light">scroll</span>
           <div className="w-px h-10 bg-gradient-to-b from-white/40 to-transparent animate-bounce" />
         </div>
@@ -122,4 +55,3 @@ export default function EyeRollSection() {
     </div>
   );
 }
-

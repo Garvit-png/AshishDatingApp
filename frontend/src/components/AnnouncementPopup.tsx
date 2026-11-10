@@ -1,180 +1,130 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Image from "next/image";
-import Link from "next/link";
-import popupData from "@/data/popup.json";
+import { useCallback, useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
+import { useContent } from "@/content/ContentContext";
+import { popupInSchedule } from "@/content/normalize";
+import type { Popup } from "@/content/types";
+import PopupView from "./PopupView";
 
-interface PopupItem {
-  id: number;
-  enabled: boolean;
-  image: string;
-  title: string;
-  description: string;
-  buttonText: string;
-  buttonLink: string;
-  buttonStyle: "red" | "white" | "black";
+const seenKey = (p: Popup) => `ac_popup_${p.id}`;
+
+function alreadySeen(p: Popup): boolean {
+  try {
+    if (p.frequency === "always") return false;
+    if (p.frequency === "session") return !!sessionStorage.getItem(seenKey(p));
+    const at = Number(localStorage.getItem(seenKey(p)) || 0);
+    if (!at) return false;
+    if (p.frequency === "daily") return Date.now() - at < 24 * 60 * 60 * 1000;
+    return true; // "once"
+  } catch {
+    return false;
+  }
 }
 
-// Only show enabled popups
-const activePopups = (popupData.popups as PopupItem[]).filter((p) => p.enabled);
+function markSeen(p: Popup) {
+  try {
+    if (p.frequency === "session") sessionStorage.setItem(seenKey(p), "1");
+    else if (p.frequency !== "always") localStorage.setItem(seenKey(p), String(Date.now()));
+  } catch {}
+}
 
+/** Decides WHEN popups appear (page, device, schedule, trigger, frequency) and shows them one by one. */
 export default function AnnouncementPopup() {
-  const [index, setIndex] = useState(0);
-  const [visible, setVisible] = useState(false);
-  const [animating, setAnimating] = useState(false);
+  const { content, preview, asset } = useContent();
+  const pathname = usePathname();
+  const [queue, setQueue] = useState<Popup[]>([]);
+  const [closing, setClosing] = useState(false);
 
-  useEffect(() => {
-    if (activePopups.length === 0) return;
-    const dismissed = sessionStorage.getItem("popups_dismissed");
-    if (dismissed) return;
-    const timer = setTimeout(() => setVisible(true), 1000);
-    return () => clearTimeout(timer);
+  const enqueue = useCallback((p: Popup) => {
+    setQueue((q) => (q.some((x) => x.id === p.id) ? q : [...q, p]));
   }, []);
 
-  const handleClose = () => {
-    if (index < activePopups.length - 1) {
-      // Animate out, then show next
-      setAnimating(true);
-      setTimeout(() => {
-        setIndex((i) => i + 1);
-        setAnimating(false);
-      }, 200);
-    } else {
-      // All done
-      setVisible(false);
-      sessionStorage.setItem("popups_dismissed", "1");
+  useEffect(() => {
+    if (preview) return; // the dashboard has its own popup preview
+    const page = pathname === "/" ? "home" : pathname.startsWith("/courses") ? "courses" : "other";
+    const mobile = window.matchMedia("(max-width: 767px)").matches;
+    const eligible = content.popups.filter(
+      (p) =>
+        p.enabled &&
+        popupInSchedule(p) &&
+        (p.pages === "all" || p.pages === page) &&
+        (p.device === "all" || (p.device === "mobile") === mobile) &&
+        !alreadySeen(p)
+    );
+    if (!eligible.length) return;
+
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    const cleanups: (() => void)[] = [];
+
+    for (const p of eligible) {
+      if (p.trigger === "load") {
+        timers.push(setTimeout(() => enqueue(p), Math.max(0, p.delaySeconds) * 1000));
+      } else if (p.trigger === "scroll") {
+        const onScroll = () => {
+          const max = document.documentElement.scrollHeight - window.innerHeight;
+          if (max > 0 && (window.scrollY / max) * 100 >= p.scrollPercent) {
+            enqueue(p);
+            window.removeEventListener("scroll", onScroll);
+          }
+        };
+        window.addEventListener("scroll", onScroll, { passive: true });
+        cleanups.push(() => window.removeEventListener("scroll", onScroll));
+      } else if (p.trigger === "exit") {
+        if (mobile) {
+          // Phones have no "mouse leaving" — show after they've spent some time instead
+          timers.push(setTimeout(() => enqueue(p), Math.max(15, p.delaySeconds) * 1000));
+        } else {
+          const onLeave = (e: MouseEvent) => {
+            if (e.clientY <= 0) {
+              enqueue(p);
+              document.removeEventListener("mouseout", onLeave);
+            }
+          };
+          // Small grace period so it doesn't fire instantly
+          timers.push(setTimeout(() => document.addEventListener("mouseout", onLeave), 3000));
+          cleanups.push(() => document.removeEventListener("mouseout", onLeave));
+        }
+      }
     }
-  };
+    return () => {
+      timers.forEach(clearTimeout);
+      cleanups.forEach((c) => c());
+    };
+  }, [content.popups, pathname, preview, enqueue]);
 
-  if (!visible || activePopups.length === 0) return null;
+  const current = queue[0];
 
-  const popup = activePopups[index];
-  const total = activePopups.length;
+  const close = useCallback(() => {
+    if (!current || closing) return;
+    markSeen(current);
+    setClosing(true);
+    setTimeout(() => {
+      setQueue((q) => q.slice(1));
+      setClosing(false);
+    }, 220);
+  }, [current, closing]);
 
-  const btnClass =
-    popup.buttonStyle === "red"
-      ? "bg-[#7f0000] hover:bg-[#990000] text-white"
-      : popup.buttonStyle === "white"
-      ? "bg-white hover:bg-gray-100 text-black"
-      : "bg-black hover:bg-[#111] text-white border border-white/20";
 
-  return (
-    <>
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[100]"
-        style={{ animation: "fade-in 0.2s ease forwards" }}
-        onClick={handleClose}
-      />
+  // Lock background scroll for centred popups
+  useEffect(() => {
+    if (!current || current.position !== "center") return;
+    window.__lenis?.stop();
+    const prev = document.documentElement.style.overflow;
+    document.documentElement.style.overflow = "hidden";
+    return () => {
+      document.documentElement.style.overflow = prev;
+      window.__lenis?.start();
+    };
+  }, [current]);
 
-      {/* Popup */}
-      <div className="fixed inset-0 z-[101] flex items-center justify-center px-4 pointer-events-none">
-        <div
-          key={index}
-          className="relative bg-[#0a0a0a] border border-[#222] rounded-2xl shadow-2xl w-full max-w-2xl pointer-events-auto overflow-hidden"
-          style={{
-            animation: animating
-              ? "popup-out 0.2s ease forwards"
-              : "popup-in 0.28s cubic-bezier(0.34,1.56,0.64,1) forwards",
-          }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          {/* Top bar — counter + close */}
-          <div className="flex items-center justify-between px-5 pt-5 pb-2">
-            {/* Dot indicators */}
-            <div className="flex items-center gap-1.5">
-              {total > 1 && activePopups.map((_, i) => (
-                <span
-                  key={i}
-                  className={`rounded-full transition-all duration-300 ${
-                    i === index
-                      ? "w-4 h-1.5 bg-white"
-                      : i < index
-                      ? "w-1.5 h-1.5 bg-[#555]"
-                      : "w-1.5 h-1.5 bg-[#333]"
-                  }`}
-                />
-              ))}
-            </div>
+  useEffect(() => {
+    if (!current) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && close();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [current, close]);
 
-            {/* Counter + Close */}
-            <div className="flex items-center gap-3 ml-auto">
-              {total > 1 && (
-                <span className="text-[#555] text-xs font-medium">{index + 1} / {total}</span>
-              )}
-              <button
-                onClick={handleClose}
-                className="w-7 h-7 bg-white/15 hover:bg-white/30 rounded-full flex items-center justify-center text-white transition-all border border-white/30"
-                aria-label={index < total - 1 ? "Next" : "Close"}
-              >
-                <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 fill-current">
-                  <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
-                </svg>
-              </button>
-            </div>
-          </div>
-
-          {/* Image */}
-          {popup.image && (
-            <div className="relative w-full" style={{ aspectRatio: "21/9" }}>
-              <Image
-                src={popup.image}
-                alt={popup.title || "Announcement"}
-                fill
-                className="object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-transparent" />
-            </div>
-          )}
-
-          {/* Content */}
-          <div className="px-6 pb-6 pt-4">
-            {popup.title && (
-              <h2 className="text-xl font-black text-white mb-2 leading-tight">{popup.title}</h2>
-            )}
-            {popup.description && (
-              <p className="text-[#888] text-sm leading-relaxed mb-5">{popup.description}</p>
-            )}
-
-            <div className="flex flex-col gap-2">
-              {popup.buttonText && popup.buttonLink && (
-                <Link
-                  href={popup.buttonLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={handleClose}
-                  className={`inline-flex items-center justify-center w-full py-3.5 rounded-xl font-bold text-sm transition-all hover:scale-[1.02] active:scale-[0.98] ${btnClass}`}
-                >
-                  {popup.buttonText}
-                </Link>
-              )}
-
-              {/* Skip to next or close */}
-              {index < total - 1 && (
-                <button
-                  onClick={handleClose}
-                  className="w-full py-2.5 text-[#555] hover:text-white text-xs transition-colors"
-                >
-                  Skip →
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <style>{`
-        @keyframes fade-in { from { opacity: 0 } to { opacity: 1 } }
-        @keyframes popup-in {
-          from { opacity: 0; transform: scale(0.92) translateY(16px); }
-          to   { opacity: 1; transform: scale(1) translateY(0); }
-        }
-        @keyframes popup-out {
-          from { opacity: 1; transform: scale(1) translateY(0); }
-          to   { opacity: 0; transform: scale(0.94) translateY(-10px); }
-        }
-      `}</style>
-    </>
-  );
+  if (!current) return null;
+  return <PopupView key={current.id} popup={current} onClose={close} closing={closing} step={queue.length > 1 ? `1 / ${queue.length}` : undefined} asset={asset} />;
 }

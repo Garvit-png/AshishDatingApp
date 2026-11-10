@@ -1,85 +1,93 @@
 "use client";
 
+import { useRef } from "react";
 import Image from "next/image";
-import Link from "next/link";
-import { useIsMobile } from "@/hooks/useIsMobile";
-import dynamic from "next/dynamic";
-import heroData from "@/data/hero.json";
-
-const Silk = dynamic(() => import("./Silk"), { ssr: false });
+import { useContent } from "@/content/ContentContext";
+import SmartLink from "./SmartLink";
+import Silk from "./Silk";
+import Reveal from "./motion/Reveal";
 
 export default function HeroSection() {
-  const isMobile = useIsMobile();
+  const { content, asset } = useContent();
+  const hero = content.hero;
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  // Subtle 3D tilt on the photo (mouse only)
+  const onMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.pointerType !== "mouse" || !cardRef.current) return;
+    const r = cardRef.current.getBoundingClientRect();
+    const x = (e.clientX - r.left) / r.width - 0.5;
+    const y = (e.clientY - r.top) / r.height - 0.5;
+    cardRef.current.style.transform = `perspective(1000px) rotateY(${x * 10}deg) rotateX(${-y * 10}deg) scale(1.02)`;
+  };
+  const onLeave = () => {
+    if (cardRef.current) cardRef.current.style.transform = "";
+  };
+
+  const lines = [hero.line1, hero.line2, hero.line3].filter(Boolean);
 
   return (
-    <section className="relative min-h-screen bg-black overflow-hidden flex items-center pt-16">
-      {/* Background */}
-      {isMobile ? (
-        <div className="absolute inset-0 z-0">
-          <div className="absolute inset-0 bg-gradient-to-br from-[#1a0000] via-black to-[#0d0000]" />
-          <div className="absolute inset-0 opacity-40" style={{ background: "radial-gradient(ellipse at 30% 50%, #7f0000 0%, transparent 50%), radial-gradient(ellipse at 70% 30%, #330000 0%, transparent 50%)" }} />
-        </div>
-      ) : (
-        <div className="absolute inset-0 z-0 opacity-100">
-          <Silk speed={5} scale={1} color="#ff0000" noiseIntensity={1.5} rotation={0} />
-        </div>
-      )}
+    <section id="about" className="relative min-h-[100svh] bg-black overflow-hidden flex items-center pt-20">
+      <div className="absolute inset-0 z-0 bg-gradient-to-br from-[#1a0000] via-black to-[#0d0000]">
+        <Silk color="#ff0000" speed={5} noiseIntensity={1.5} />
+      </div>
+      <div className="absolute inset-0 bg-gradient-to-br from-black/70 via-black/50 to-black/10 z-0 pointer-events-none" />
 
-      <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-black/50 to-transparent z-0 pointer-events-none" />
-
-      <div className="relative z-10 w-full px-4 sm:px-8 lg:px-12 py-12 md:py-20">
-        <div className="flex flex-col lg:flex-row items-center justify-between gap-8 lg:gap-16">
-
-          {/* LEFT — Text */}
+      <div className="relative z-10 w-full max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 py-12 md:py-20">
+        <div className="flex flex-col lg:flex-row items-center justify-between gap-10 lg:gap-16">
           <div className="flex-1 w-full flex flex-col items-center lg:items-start text-center lg:text-left">
-            <h1 className="text-[10.5vw] sm:text-[8vw] lg:text-[5.5vw] font-black text-white leading-[1.1] mb-4 md:mb-6 tracking-tighter w-full flex flex-col gap-2 md:gap-4">
-              <span className="block opacity-0 animate-slide-up" style={{ animationDelay: "0.1s", animationFillMode: "forwards" }}>
-                {heroData.line1}
-              </span>
-              <span className="block opacity-0 animate-slide-up" style={{ animationDelay: "0.2s", animationFillMode: "forwards" }}>
-                {heroData.line2}
-              </span>
-              <span className="block opacity-0 animate-slide-up" style={{ animationDelay: "0.3s", animationFillMode: "forwards" }}>
-                {heroData.line3}
-              </span>
-            </h1>
+            <h2 className="text-[11vw] sm:text-[8vw] lg:text-[5.2vw] xl:text-[4.25rem] font-black text-white leading-[1.02] mb-5 md:mb-7 tracking-tighter w-full">
+              {lines.map((line, i) => (
+                <span key={i} className="block overflow-hidden pb-[0.08em]">
+                  <Reveal as="span" variant="up" delay={i * 120} className={`block ${i === 1 ? "text-gradient" : ""}`}>
+                    {line}
+                  </Reveal>
+                </span>
+              ))}
+            </h2>
 
-            <p className="text-gray-300 font-light text-base sm:text-xl mb-8 md:mb-10 max-w-xl leading-relaxed opacity-0 animate-slide-up"
-              style={{ animationDelay: "0.45s", animationFillMode: "forwards" }}>
-              {heroData.subtitle}
-            </p>
+            <Reveal as="p" delay={380} className="text-white/70 font-light text-base sm:text-xl mb-8 md:mb-10 max-w-xl leading-relaxed">
+              {hero.subtitle}
+            </Reveal>
 
-            <div className="opacity-0 animate-slide-up" style={{ animationDelay: "0.55s", animationFillMode: "forwards" }}>
-              <Link href={heroData.ctaLink}
-                className="inline-flex items-center gap-2 bg-white/10 text-white font-medium px-6 py-3 md:px-8 md:py-4 rounded-full text-sm hover:bg-black hover:text-white hover:border-black transition-all duration-300 hover:scale-105 active:scale-95 border border-white/20">
-                {heroData.ctaText}
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5l7 7-7 7" />
-                </svg>
-              </Link>
-            </div>
+            <Reveal delay={480}>
+              <SmartLink
+                href={hero.ctaLink}
+                className="btn-shine group inline-flex items-center gap-3 bg-white text-black font-bold px-7 py-4 rounded-full text-sm sm:text-base hover:scale-105 active:scale-95 transition-transform duration-300 shadow-[0_10px_40px_-10px_rgba(255,255,255,0.5)]"
+              >
+                {hero.ctaText}
+                <span className="w-7 h-7 rounded-full bg-black text-white grid place-items-center group-hover:translate-x-1 transition-transform">→</span>
+              </SmartLink>
+            </Reveal>
           </div>
 
-          {/* RIGHT — Photo */}
-          <div className="flex-1 flex justify-center lg:justify-end opacity-0 animate-slide-up" style={{ animationDelay: "0.2s", animationFillMode: "forwards" }}>
-            <div className="relative w-[260px] sm:w-[380px] lg:w-[420px] h-[380px] sm:h-[540px] lg:h-[580px] rounded-3xl overflow-hidden shadow-2xl shadow-[#7f0000]/30 border border-white/10">
-              <div className="absolute inset-0 rounded-3xl ring-1 ring-inset ring-white/10 z-10 pointer-events-none" />
-              <Image src={heroData.photo} alt="Ashish Chhipa – Dating Coach" fill className="object-cover object-top" priority />
-              <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black/70 to-transparent z-10" />
-              <div className="absolute bottom-6 left-6 z-20">
-                <p className="text-white font-bold text-xl sm:text-2xl leading-tight mb-1">Ashish Chhipa</p>
-                <p className="text-[#ff1a1a] text-sm sm:text-base font-semibold tracking-wide">Dating Coach &amp; Mentor</p>
+          <Reveal variant="zoom" delay={150} className="flex-1 flex justify-center lg:justify-end">
+            <div onPointerMove={onMove} onPointerLeave={onLeave} className="relative">
+              <div className="absolute -inset-6 rounded-[2.5rem] bg-[color:var(--accent-color)] opacity-30 blur-3xl animate-float pointer-events-none" />
+              <div
+                ref={cardRef}
+                className="relative w-[78vw] max-w-[300px] sm:max-w-[380px] lg:max-w-[420px] aspect-[3/4] rounded-[2rem] overflow-hidden shadow-2xl shadow-[#7f0000]/40 border border-white/10 transition-transform duration-300 ease-out"
+              >
+                <Image
+                  src={asset(hero.photo)}
+                  alt={`${hero.photoName} – ${hero.photoRole}`}
+                  fill
+                  sizes="(max-width: 640px) 78vw, 420px"
+                  className="object-cover object-top"
+                  preload
+                />
+                <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-black/85 to-transparent" />
+                <div className="absolute bottom-6 left-6 right-6">
+                  <p className="text-white font-bold text-xl sm:text-2xl leading-tight mb-1">{hero.photoName}</p>
+                  <p className="text-accent text-sm sm:text-base font-semibold tracking-wide">{hero.photoRole}</p>
+                </div>
               </div>
             </div>
-          </div>
+          </Reveal>
         </div>
       </div>
 
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex-col items-center gap-2 animate-bounce hidden md:flex">
-        <div className="w-0.5 h-8 bg-white/30 rounded-full" />
-        <div className="w-1.5 h-1.5 rounded-full bg-white/50" />
-      </div>
-      <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-b from-transparent to-black z-10 pointer-events-none" />
+      <div className="absolute bottom-0 inset-x-0 h-40 bg-gradient-to-b from-transparent to-black z-10 pointer-events-none" />
     </section>
   );
 }

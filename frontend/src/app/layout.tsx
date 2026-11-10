@@ -1,37 +1,53 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter, Cormorant_Garamond } from "next/font/google";
+import { siteContent } from "@/content/server";
 import "./globals.css";
 
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700", "800", "900"],
+  display: "swap",
 });
 
 const cormorant = Cormorant_Garamond({
   variable: "--font-cormorant",
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
+  weight: ["300", "400", "600"],
   style: ["normal", "italic"],
+  display: "swap",
 });
 
+const siteUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : "http://localhost:3000";
+
 export const metadata: Metadata = {
-  title: "Ashish Chhipa – Attract Better. Date Smarter. Build Lasting Love.",
-  description:
-    "Join thousands of learners and transform your dating life with expert-led courses, playbooks, and proven strategies by Ashish Chhipa.",
+  metadataBase: new URL(siteUrl),
+  title: siteContent.settings.siteTitle,
+  description: siteContent.settings.siteDescription,
+  openGraph: {
+    title: siteContent.settings.siteTitle,
+    description: siteContent.settings.siteDescription,
+    images: [siteContent.hero.photo],
+    type: "website",
+  },
+  twitter: { card: "summary_large_image" },
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export const viewport: Viewport = {
+  themeColor: "#000000",
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+};
+
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${inter.variable} ${cormorant.variable} h-full antialiased`}>
-      <head>
-        <link rel="preload" href="/shuru.mp4" as="video" type="video/mp4" />
-      </head>
-      <body className="min-h-full flex flex-col bg-white">{children}</body>
+    <html
+      lang="en"
+      data-scroll-behavior="smooth"
+      className={`${inter.variable} ${cormorant.variable} antialiased`}
+      style={{ ["--accent-color" as string]: siteContent.settings.accentColor }}
+    >
+      <body className="min-h-dvh bg-black font-sans">{children}</body>
     </html>
   );
 }

@@ -1,205 +1,136 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import testimonialsData from "@/data/testimonials.json";
-
-interface TestimonialsData {
-  enabled: boolean;
-  heading: string;
-  subheading: string;
-  screenshots: string[];
-}
-
-const data = testimonialsData as TestimonialsData;
-
-const AUTO_PLAY_INTERVAL = 3000; // 3 seconds
+import { useContent } from "@/content/ContentContext";
+import Reveal from "./motion/Reveal";
 
 export default function TestimonialsSection() {
+  const { content, asset } = useContent();
+  const t = content.testimonials;
+  const shots = t.screenshots;
+  const total = shots.length;
+  const interval = Math.max(1.5, t.autoplaySeconds) * 1000;
+
   const [current, setCurrent] = useState(0);
   const [paused, setPaused] = useState(false);
   const [inView, setInView] = useState(false);
-  const [direction, setDirection] = useState<"next" | "prev" | null>(null);
-  const sectionRef = useRef<HTMLDivElement>(null);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const sectionRef = useRef<HTMLElement>(null);
+  const dragX = useRef<number | null>(null);
 
-  const total = data.screenshots.length;
-
-  // Intersection observer — only autoplay when visible
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([e]) => setInView(e.isIntersecting),
-      { threshold: 0.2 }
-    );
-    if (sectionRef.current) observer.observe(sectionRef.current);
-    return () => observer.disconnect();
+    const io = new IntersectionObserver(([e]) => setInView(e.isIntersecting), { threshold: 0.25 });
+    if (sectionRef.current) io.observe(sectionRef.current);
+    return () => io.disconnect();
   }, []);
 
-  const next = useCallback(() => {
-    setDirection("next");
-    setCurrent(c => (c + 1) % total);
-  }, [total]);
+  const next = useCallback(() => setCurrent((c) => (c + 1) % total), [total]);
+  const prev = useCallback(() => setCurrent((c) => (c - 1 + total) % total), [total]);
 
-  const prev = useCallback(() => {
-    setDirection("prev");
-    setCurrent(c => (c - 1 + total) % total);
-  }, [total]);
-
-  const goTo = useCallback((index: number) => {
-    setDirection(index > current ? "next" : "prev");
-    setCurrent(index);
-  }, [current]);
-
-  // Auto-play
   useEffect(() => {
     if (!inView || paused || total < 2) return;
-    timerRef.current = setInterval(next, AUTO_PLAY_INTERVAL);
-    return () => { if (timerRef.current) clearInterval(timerRef.current); };
-  }, [inView, paused, next, total]);
+    const id = setInterval(next, interval);
+    return () => clearInterval(id);
+  }, [inView, paused, next, total, interval, current]);
 
-  if (!data.enabled || total === 0) return null;
+  if (total === 0) return null;
+  const active = current % total;
+
+  const offsetOf = (idx: number) => {
+    let d = idx - active;
+    if (d > total / 2) d -= total;
+    if (d < -total / 2) d += total;
+    return d;
+  };
 
   return (
-    <section
-      ref={sectionRef}
-      className="relative bg-black py-24 px-4 overflow-hidden"
-    >
-      {/* Background glow */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[400px] rounded-full bg-[#7f0000]/8 blur-[140px]" />
-      </div>
+    <section id="testimonials" ref={sectionRef} className="relative bg-black py-20 sm:py-28 px-4 overflow-hidden">
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[500px] rounded-full bg-[#7f0000]/20 blur-[140px] pointer-events-none" />
 
       <div className="max-w-6xl mx-auto relative z-10">
-
-        {/* Header */}
-        <div className={`text-center mb-14 transition-all duration-700 ${inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}>
-          <p className="text-[#7f0000] text-[10px] font-bold tracking-[4px] uppercase mb-4">TESTIMONIALS</p>
-          <h2 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight mb-3">
-            {data.heading}
-          </h2>
-          <p className="text-[#555] text-base max-w-lg mx-auto">{data.subheading}</p>
+        <div className="text-center mb-12 sm:mb-16">
+          <Reveal as="p" className="text-accent text-[11px] font-bold tracking-[0.4em] uppercase mb-4">{t.eyebrow}</Reveal>
+          <Reveal as="h2" delay={80} className="text-4xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight mb-4">{t.heading}</Reveal>
+          <Reveal as="p" delay={160} className="text-white/50 text-base sm:text-lg max-w-lg mx-auto">{t.subheading}</Reveal>
         </div>
 
-        {/* Slider */}
         <div
-          className="relative flex items-center justify-center"
+          className="relative flex items-center justify-center select-none touch-pan-y"
           onMouseEnter={() => setPaused(true)}
           onMouseLeave={() => setPaused(false)}
+          onPointerDown={(e) => (dragX.current = e.clientX)}
+          onPointerUp={(e) => {
+            if (dragX.current === null) return;
+            const dx = e.clientX - dragX.current;
+            dragX.current = null;
+            if (Math.abs(dx) > 40) (dx < 0 ? next : prev)();
+          }}
         >
-          {/* Prev button */}
-          <button
-            onClick={prev}
-            className="absolute left-0 sm:left-2 z-20 w-10 h-10 rounded-full bg-black/60 border border-white/10 hover:border-white/30 flex items-center justify-center text-white transition-all hover:scale-110 active:scale-95 backdrop-blur-sm"
-            aria-label="Previous"
-          >
-            <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current">
-              <path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6z"/>
-            </svg>
-          </button>
+          <NavBtn onClick={prev} side="left" />
 
-          {/* Cards track */}
-          <div className="w-full overflow-hidden px-12 sm:px-16">
-            <div className="relative h-[520px] flex items-center justify-center">
-              {/* Render all cards with absolute positioning for smooth transitions */}
-              {data.screenshots.map((screenshot, idx) => {
-                const offset = idx === current ? 0 : idx === (current - 1 + total) % total ? -1 : idx === (current + 1) % total ? 1 : null;
-                if (offset === null) return null;
-                
-                const isCenter = offset === 0;
-                
-                return (
-                  <div
-                    key={idx}
-                    onClick={() => !isCenter && goTo(idx)}
-                    className={`absolute transition-all duration-700 ease-out cursor-pointer select-none will-change-transform rounded-2xl overflow-hidden border ${
-                      isCenter
-                        ? "w-[260px] sm:w-[300px] md:w-[340px] border-white/20 shadow-2xl shadow-[#7f0000]/20 scale-100 opacity-100 z-10"
-                        : "w-[160px] sm:w-[200px] md:w-[240px] border-white/5 scale-[0.85] opacity-40 hover:opacity-60 hover:scale-90 z-0"
-                    }`}
-                    style={{ 
-                      aspectRatio: "9/16", 
-                      maxHeight: "520px",
-                      transform: `translateX(${offset * 100}%) scale(${isCenter ? 1 : 0.85})`,
-                      filter: isCenter ? "none" : "blur(2px)",
-                    }}
-                  >
-                    <Image
-                      src={screenshot}
-                      alt={`Testimonial ${idx + 1}`}
-                      fill
-                      className="object-cover object-top"
-                      draggable={false}
-                      priority={Math.abs(offset) <= 1}
-                    />
-                    {/* Gradient overlay on side cards */}
-                    {!isCenter && (
-                      <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/30 to-black/50" />
-                    )}
-                    {/* Red glow on center card */}
-                    {isCenter && (
-                      <div className="absolute inset-0 pointer-events-none">
-                        <div className="absolute inset-0 rounded-2xl ring-1 ring-[#7f0000]/30" />
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+          <div className="relative w-full h-[440px] sm:h-[520px] flex items-center justify-center" style={{ perspective: 1200 }}>
+            {shots.map((src, idx) => {
+              const o = offsetOf(idx);
+              if (Math.abs(o) > 2) return null;
+              const center = o === 0;
+              return (
+                <button
+                  key={src + idx}
+                  onClick={() => !center && setCurrent(idx)}
+                  aria-label={center ? `Testimonial ${idx + 1}` : `Show testimonial ${idx + 1}`}
+                  className="absolute w-[230px] sm:w-[290px] md:w-[320px] aspect-[9/16] max-h-full rounded-3xl overflow-hidden border transition-all duration-700 ease-out-expo"
+                  style={{
+                    transform: `translateX(${o * 62}%) translateZ(${center ? 0 : -160 * Math.abs(o)}px) rotateY(${o * -18}deg)`,
+                    opacity: center ? 1 : Math.abs(o) === 1 ? 0.45 : 0,
+                    zIndex: 10 - Math.abs(o),
+                    borderColor: center ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.05)",
+                    boxShadow: center ? "0 30px 80px -20px color-mix(in srgb, var(--accent-color) 45%, transparent)" : "none",
+                    filter: center ? "none" : "blur(1.5px) saturate(0.6)",
+                  }}
+                >
+                  <Image src={asset(src)} alt="" fill sizes="(max-width: 640px) 230px, 320px" className="object-cover object-top pointer-events-none" draggable={false} />
+                </button>
+              );
+            })}
           </div>
 
-          {/* Next button */}
-          <button
-            onClick={next}
-            className="absolute right-0 sm:right-2 z-20 w-10 h-10 rounded-full bg-black/60 border border-white/10 hover:border-white/30 flex items-center justify-center text-white transition-all hover:scale-110 active:scale-95 backdrop-blur-sm"
-            aria-label="Next"
-          >
-            <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current">
-              <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/>
-            </svg>
-          </button>
+          <NavBtn onClick={next} side="right" />
         </div>
 
-        {/* Dot indicators with progress bar */}
         {total > 1 && (
-          <div className="mt-10">
-            {/* Progress bar for current slide */}
-            {!paused && inView && (
-              <div className="max-w-xs mx-auto mb-4 h-0.5 bg-[#222] rounded-full overflow-hidden">
-                <div 
-                  key={current}
-                  className="h-full bg-gradient-to-r from-[#7f0000] to-white"
-                  style={{
-                    animation: `progress ${AUTO_PLAY_INTERVAL}ms linear forwards`
-                  }}
-                />
-              </div>
-            )}
-            
-            {/* Dot navigation */}
+          <div className="mt-10 flex flex-col items-center gap-4">
+            <div className="w-40 h-0.5 bg-white/10 rounded-full overflow-hidden">
+              {inView && !paused && (
+                <div key={active} className="h-full origin-left bg-accent" style={{ animation: `progress ${interval}ms linear forwards` }} />
+              )}
+            </div>
             <div className="flex justify-center gap-2">
-              {data.screenshots.map((_, i) => (
+              {shots.map((_, i) => (
                 <button
                   key={i}
-                  onClick={() => goTo(i)}
-                  className={`rounded-full transition-all duration-500 ease-out ${
-                    i === current 
-                      ? "w-6 h-1.5 bg-gradient-to-r from-[#7f0000] to-white shadow-lg shadow-[#7f0000]/30" 
-                      : "w-1.5 h-1.5 bg-[#333] hover:bg-[#555] hover:scale-125"
-                  }`}
+                  onClick={() => setCurrent(i)}
+                  className={`h-1.5 rounded-full transition-all duration-500 ${i === active ? "w-7 bg-accent" : "w-1.5 bg-white/20 hover:bg-white/40"}`}
                   aria-label={`Go to slide ${i + 1}`}
                 />
               ))}
             </div>
           </div>
         )}
-
-        <style jsx>{`
-          @keyframes progress {
-            from { width: 0%; }
-            to { width: 100%; }
-          }
-        `}</style>
       </div>
     </section>
+  );
+}
+
+function NavBtn({ onClick, side }: { onClick: () => void; side: "left" | "right" }) {
+  return (
+    <button
+      onClick={onClick}
+      aria-label={side === "left" ? "Previous" : "Next"}
+      className={`absolute ${side === "left" ? "left-0 sm:left-4" : "right-0 sm:right-4"} z-20 w-11 h-11 rounded-full bg-black/60 border border-white/15 hover:border-white/40 hover:bg-white hover:text-black grid place-items-center text-white transition-all hover:scale-110 active:scale-95 backdrop-blur`}
+    >
+      <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current">
+        <path d={side === "left" ? "M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6z" : "M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"} />
+      </svg>
+    </button>
   );
 }

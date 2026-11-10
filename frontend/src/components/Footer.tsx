@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { useContent } from "@/content/ContentContext";
 import LazyVideo from "./LazyVideo";
+import Reveal from "./motion/Reveal";
 
 const instagramIcon = (
   <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
@@ -9,109 +11,58 @@ const instagramIcon = (
   </svg>
 );
 
+function Social({ href, label }: { href: string; label: string }) {
+  if (!href) return null;
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label={label}
+      className="w-11 h-11 rounded-full border border-white/25 grid place-items-center text-white/60 hover:text-white hover:border-white hover:bg-gradient-to-br hover:from-[#833ab4] hover:via-[#fd1d1d] hover:to-[#fcb045] transition-all duration-300 hover:scale-110 hover:rotate-6"
+    >
+      {instagramIcon}
+    </a>
+  );
+}
+
 export default function Footer() {
+  const { content, asset } = useContent();
+  const f = content.footer;
 
   return (
-    <footer className="relative border-t border-white/10 overflow-hidden">
-      {/* Background — Video everywhere */}
-      <LazyVideo
-        src="/ghoda.mp4"
-        autoPlay
-        muted
-        loop
-        playsInline
-        className="absolute inset-0 w-full h-full object-cover z-0"
-      />
-      <div className="absolute inset-0 bg-black/60 z-0" />
+    <footer className="relative border-t border-white/10 overflow-hidden pb-24 md:pb-0">
+      <LazyVideo src={asset(f.video)} autoPlay muted loop playsInline className="absolute inset-0 w-full h-full object-cover" />
+      <div className="absolute inset-0 bg-black/70" />
 
-      {/* Main Footer */}
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
+      <div className="relative z-10 max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-20">
-          {/* Left Column – Ashish Chhipa */}
-          <div>
-            <h3 className="text-base font-black text-white tracking-widest uppercase mb-4">
-              Ashish Chhipa
-            </h3>
-            <p className="text-sm text-gray-300 leading-relaxed max-w-sm mb-6">
-              Ashish Chhipa is a dating coach and content creator who helps people build confidence,
-              understand the science behind attraction, and improve their dating skills. To improve his
-              advice based on psychology and real-life experience, he pledges his values to
-              communicate better, form meaningful connections, and navigate love in the early and
-              confident way.
-            </p>
-            <div className="flex items-center gap-3">
-              <Link
-                href="https://www.instagram.com/ashishchhipaofficial/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-9 h-9 rounded-full border border-gray-500 flex items-center justify-center text-gray-400 hover:text-white hover:border-white transition-all duration-200 hover:scale-110"
-                aria-label="Instagram"
-              >
-                {instagramIcon}
-              </Link>
-            </div>
-          </div>
+          <Reveal>
+            <h3 className="text-base font-black text-white tracking-[0.2em] uppercase mb-4">{f.aboutTitle}</h3>
+            <p className="text-sm text-white/70 leading-relaxed max-w-md mb-6">{f.aboutText}</p>
+            <Social href={f.instagram} label={`${f.aboutTitle} on Instagram`} />
+          </Reveal>
 
-          {/* Right Column – Sellixa */}
-          <div className="md:border-l md:border-white/10 md:pl-12 lg:pl-20">
+          <Reveal delay={120} className="md:border-l md:border-white/10 md:pl-12 lg:pl-20">
             <div className="flex items-start justify-between gap-4 mb-4">
-              <h3 className="text-base font-black text-white tracking-widest uppercase">
-                Sellixa
-              </h3>
-              <span className="text-xs text-gray-400 font-medium italic">Made In Collaboration</span>
+              <h3 className="text-base font-black text-white tracking-[0.2em] uppercase">{f.partnerTitle}</h3>
+              <span className="text-xs text-white/50 font-medium italic">{f.partnerTag}</span>
             </div>
-            <p className="text-sm text-gray-300 leading-relaxed max-w-sm mb-6">
-              Sellixa helps coaches and teachers to offer their income through courses, ebooks, webinars, and growth
-              speakers.
-            </p>
-            <div className="flex items-center gap-3">
-              <Link
-                href="https://www.instagram.com/sellixa._hq/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-9 h-9 rounded-full border border-gray-500 flex items-center justify-center text-gray-400 hover:text-white hover:border-white transition-all duration-200 hover:scale-110"
-                aria-label="Sellixa Instagram"
-              >
-                {instagramIcon}
-              </Link>
-            </div>
-          </div>
+            <p className="text-sm text-white/70 leading-relaxed max-w-md mb-6">{f.partnerText}</p>
+            <Social href={f.partnerInstagram} label={`${f.partnerTitle} on Instagram`} />
+          </Reveal>
         </div>
       </div>
 
-      {/* Bottom Bar */}
-      <div className="relative z-10 border-t border-white/10 bg-black/40 backdrop-blur-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p className="text-xs text-gray-400">
-            Copyright © 2025 Appvision, Inc. All rights reserved.
-          </p>
-          <div className="flex items-center gap-4 flex-wrap justify-center">
-            {["Privacy Policy", "Terms of Use", "Cookie Policy", "Preferences", "Privacy List", "Accessibility"].map(
-              (item) => (
-                <Link
-                  key={item}
-                  href={`#${item.toLowerCase().replace(/\s/g, "-")}`}
-                  className="text-xs text-gray-400 hover:text-white transition-colors"
-                >
-                  {item}
-                </Link>
-              )
-            )}
-            <Link
-              href="/admin"
-              className="group flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-white/10 hover:border-white/25 bg-white/5 hover:bg-white/10 transition-all duration-200"
-              aria-label="Admin"
-              title="Admin Panel"
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3 text-gray-500 group-hover:text-gray-300 transition-colors">
-                <circle cx="12" cy="8" r="4" />
-                <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
-              </svg>
-              <span className="text-[10px] text-gray-500 group-hover:text-gray-300 font-medium tracking-wider transition-colors">
-                ADMIN
-              </span>
-            </Link>
-          </div>
+      <div className="relative z-10 border-t border-white/10 bg-black/50 backdrop-blur-sm">
+        <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 py-5 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <p className="text-xs text-white/50 text-center">{f.copyright}</p>
+          <Link
+            href="/admin"
+            className="text-[10px] text-white/30 hover:text-white/70 font-medium tracking-[0.2em] uppercase transition-colors"
+          >
+            Admin
+          </Link>
         </div>
       </div>
     </footer>

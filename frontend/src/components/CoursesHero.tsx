@@ -1,312 +1,120 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
-
-const benefits = [
-  "Approach any woman with zero hesitation",
-  "Text conversations that build real attraction",
-  "Read her psychology before she says a word",
-  "Turn rejections into unshakeable confidence",
-  "Land dates consistently — not just occasionally",
-  "Build an identity women are naturally drawn to",
-];
+import Image from "next/image";
+import { useContent } from "@/content/ContentContext";
 
 const avatarColors = ["#5a0000", "#3a0000", "#2a0000", "#4a0010", "#3a0020"];
 const avatarInitials = ["R", "A", "S", "K", "M"];
 
-export default function CoursesHero({ onScrollToCourses }: { onScrollToCourses: () => void }) {
-  const [visible, setVisible] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+function In({ delay, children, className = "" }: { delay: number; children: React.ReactNode; className?: string }) {
+  return (
+    <div className={`animate-slide-up ${className}`} style={{ animationDelay: `${delay}ms` }}>
+      {children}
+    </div>
+  );
+}
 
-  useEffect(() => {
-    const t = setTimeout(() => setVisible(true), 80);
-    return () => clearTimeout(t);
-  }, []);
+export default function CoursesHero({ onScrollToCourses }: { onScrollToCourses: () => void }) {
+  const { content, asset } = useContent();
+  const c = content.coursesPage;
 
   return (
-    <section
-      ref={ref}
-      className="relative w-full min-h-screen bg-[#8B0000] overflow-x-hidden flex flex-col"
-      style={{ fontFamily: "var(--font-inter), Inter, sans-serif" }}
-    >
-      {/* ── Ambient overlays ── */}
-      <div className="pointer-events-none absolute inset-0 z-0">
-        <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse 80% 60% at 0% 0%, rgba(0,0,0,0.35) 0%, transparent 60%)" }} />
-        <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse 100% 40% at 50% 100%, rgba(0,0,0,0.4) 0%, transparent 70%)" }} />
+    <section className="relative w-full min-h-[100svh] bg-[#8B0000] overflow-hidden flex flex-col">
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_0%_0%,rgba(0,0,0,0.4)_0%,transparent_60%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_100%_40%_at_50%_100%,rgba(0,0,0,0.45)_0%,transparent_70%)]" />
+        <div className="absolute -right-40 top-1/4 w-[600px] h-[600px] rounded-full bg-black/30 blur-[120px] animate-float" />
       </div>
 
-      {/* ── Back button ── */}
-      <div className="relative z-20 px-4 sm:px-10 lg:px-16 pt-5">
-        <Link
-          href="/"
-          className="inline-flex items-center gap-2 text-sm font-semibold transition-all duration-200 hover:gap-3"
-          style={{ color: "rgba(255,220,220,0.85)" }}
-        >
-          <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current">
-            <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" />
-          </svg>
-          Back to Home
+      <div className="relative z-20 px-5 sm:px-10 lg:px-16 pt-5">
+        <Link href="/" className="group inline-flex items-center gap-2 text-sm font-semibold text-[rgba(255,220,220,0.85)] hover:text-white transition-colors">
+          <span className="transition-transform group-hover:-translate-x-1">←</span> Back to Home
         </Link>
       </div>
 
-      {/* ── Main content: stacks vertically on mobile, side-by-side on lg ── */}
-      <div className="relative z-10 flex-1 flex flex-col lg:flex-row items-stretch max-w-[1440px] mx-auto w-full px-4 sm:px-10 lg:px-16 pt-6 pb-8 lg:pt-2 lg:pb-0">
-
-        {/* ════ LEFT SIDE ════ */}
-        <div className="flex-none lg:w-[45%] flex flex-col justify-start py-4 lg:py-16 pr-0 lg:pr-12">
-
-          {/* Badge */}
-          <div
-            className="inline-flex items-center gap-2 self-start mb-5"
-            style={{
-              opacity: visible ? 1 : 0,
-              transform: visible ? "translateY(0)" : "translateY(16px)",
-              transition: "opacity 0.6s ease, transform 0.6s ease",
-            }}
-          >
-            <span
-              className="text-[10px] font-bold tracking-[0.2em] uppercase px-3 py-1.5 rounded-full border"
-              style={{
-                color: "#fff",
-                borderColor: "rgba(255,255,255,0.4)",
-                background: "rgba(255,255,255,0.1)",
-              }}
-            >
-              ✦ Limited Seats Available
+      <div className="relative z-10 flex-1 flex flex-col lg:flex-row items-stretch max-w-[1440px] mx-auto w-full px-5 sm:px-10 lg:px-16 pt-6 pb-10 lg:pt-2 lg:pb-0">
+        <div className="lg:w-[48%] flex flex-col justify-center py-4 lg:py-16 lg:pr-12">
+          <In delay={0}>
+            <span className="inline-block text-[10px] font-bold tracking-[0.2em] uppercase px-3 py-1.5 rounded-full border border-white/40 bg-white/10 text-white mb-5">
+              {c.badge}
             </span>
-          </div>
+          </In>
 
-          {/* Heading — no whitespace-nowrap on mobile, only lg+ */}
-          <h1
-            className="font-black text-white leading-[1.12] tracking-tight mb-5
-              text-[1.75rem] sm:text-[2.2rem] lg:text-[2.8rem] xl:text-[3.2rem]
-              lg:whitespace-nowrap"
-            style={{
-              opacity: visible ? 1 : 0,
-              transform: visible ? "translateY(0)" : "translateY(20px)",
-              transition: "opacity 0.65s ease, transform 0.65s ease",
-              transitionDelay: "80ms",
-              textShadow: "0 2px 12px rgba(0,0,0,0.4)",
-            }}
-          >
-            Build <span style={{ color: "#000", textShadow: "none" }}>Standards.</span>
-            <br />
-            Create <span style={{ color: "#000", textShadow: "none" }}>Attraction.</span>
-            <br />
-            Date With <span style={{ color: "#000", textShadow: "none" }}>Confidence.</span>
+          <h1 className="font-black text-white leading-[1.08] tracking-tight mb-5 text-[2rem] sm:text-[2.6rem] lg:text-[3rem] xl:text-[3.4rem] [text-shadow:0_2px_12px_rgba(0,0,0,0.4)]">
+            {c.headingLines.map((l, i) => (
+              <In key={i} delay={80 + i * 90}>
+                {l.lead} <span className="text-black [text-shadow:none]">{l.highlight}</span>
+              </In>
+            ))}
           </h1>
 
-          {/* Subtitle */}
-          <p
-            className="text-sm sm:text-base italic mb-6 leading-relaxed max-w-md"
-            style={{
-              color: "rgba(255,220,220,0.85)",
-              opacity: visible ? 1 : 0,
-              transform: visible ? "translateY(0)" : "translateY(16px)",
-              transition: "opacity 0.65s ease, transform 0.65s ease",
-              transitionDelay: "160ms",
-            }}
-          >
-            The exact playbooks and courses that took men from awkward to magnetic — without fake pickup tactics.
-          </p>
+          <In delay={380}>
+            <p className="text-sm sm:text-base italic mb-6 leading-relaxed max-w-md text-[rgba(255,220,220,0.9)]">{c.subtitle}</p>
+          </In>
 
-          {/* Benefits list */}
-          <div
-            className="mb-7 flex flex-col"
-            style={{
-              opacity: visible ? 1 : 0,
-              transform: visible ? "translateY(0)" : "translateY(16px)",
-              transition: "opacity 0.65s ease, transform 0.65s ease",
-              transitionDelay: "240ms",
-            }}
-          >
-            {benefits.map((benefit, i) => (
-              <div key={i}>
-                <div className="flex items-center gap-3 py-2.5">
-                  <span
-                    className="flex-none w-5 h-5 rounded-full flex items-center justify-center"
-                    style={{
-                      background: "rgba(255,255,255,0.15)",
-                      border: "1px solid rgba(255,255,255,0.4)",
-                    }}
-                  >
+          <ul className="mb-8 flex flex-col">
+            {c.benefits.map((benefit, i) => (
+              <li key={i} className="animate-slide-up flex items-center gap-3 py-2.5 border-b border-white/10 last:border-0" style={{ animationDelay: `${440 + i * 60}ms` }}>
+                  <span className="flex-none w-5 h-5 rounded-full grid place-items-center bg-white/15 border border-white/40">
                     <svg viewBox="0 0 12 12" className="w-3 h-3" fill="none">
-                      <path d="M2 6l3 3 5-5" stroke="#ffffff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                      <path d="M2 6l3 3 5-5" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   </span>
-                  <span className="text-white text-sm font-medium leading-snug" style={{ textShadow: "0 1px 4px rgba(0,0,0,0.3)" }}>
-                    {benefit}
-                  </span>
-                </div>
-                {i < benefits.length - 1 && (
-                  <div className="h-px" style={{ background: "rgba(255,255,255,0.12)" }} />
-                )}
-              </div>
+                  <span className="text-white text-sm font-medium leading-snug">{benefit}</span>
+              </li>
             ))}
-          </div>
+          </ul>
 
-          {/* CTA row */}
-          <div
-            className="flex flex-wrap items-center gap-3 mb-6"
-            style={{
-              opacity: visible ? 1 : 0,
-              transform: visible ? "translateY(0)" : "translateY(16px)",
-              transition: "opacity 0.65s ease, transform 0.65s ease",
-              transitionDelay: "340ms",
-            }}
-          >
+          <In delay={500 + c.benefits.length * 60} className="flex flex-col sm:flex-row sm:items-center gap-5">
             <button
               onClick={onScrollToCourses}
-              className="group relative inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm text-white overflow-hidden w-full sm:w-auto justify-center"
-              style={{
-                background: "#000",
-                border: "1px solid rgba(0,0,0,0.3)",
-                boxShadow: "0 4px 24px rgba(0,0,0,0.4)",
-                transition: "box-shadow 0.25s ease, transform 0.2s ease",
-              }}
-              onMouseEnter={e => {
-                (e.currentTarget as HTMLButtonElement).style.transform = "translateY(-1px)";
-                (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 6px 32px rgba(0,0,0,0.6)";
-              }}
-              onMouseLeave={e => {
-                (e.currentTarget as HTMLButtonElement).style.transform = "translateY(0)";
-                (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 4px 24px rgba(0,0,0,0.4)";
-              }}
+              className="btn-shine group inline-flex items-center justify-center gap-2 px-7 py-4 rounded-full font-bold text-sm text-white bg-black shadow-[0_8px_30px_rgba(0,0,0,0.45)] hover:-translate-y-0.5 hover:shadow-[0_12px_40px_rgba(0,0,0,0.6)] transition-all"
             >
-              Explore All Courses
-              <svg viewBox="0 0 16 16" className="w-4 h-4 fill-current transition-transform duration-200 group-hover:translate-x-0.5">
-                <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-              </svg>
+              {c.ctaText}
+              <span className="transition-transform group-hover:translate-x-1">→</span>
             </button>
 
-            <button
-              className="group inline-flex items-center gap-2.5 text-sm font-semibold transition-colors duration-200"
-              style={{ color: "rgba(255,220,220,0.9)" }}
-            >
-              <span
-                className="w-9 h-9 rounded-full flex items-center justify-center pl-0.5"
-                style={{ background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.25)" }}
-              >
-                <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current text-white">
-                  <path d="M8 5v14l11-7z" />
-                </svg>
-              </span>
-              Watch free preview
-            </button>
-          </div>
-
-          {/* Social proof */}
-          <div
-            className="flex items-center gap-3"
-            style={{
-              opacity: visible ? 1 : 0,
-              transition: "opacity 0.65s ease",
-              transitionDelay: "420ms",
-            }}
-          >
-            <div className="flex items-center">
-              {avatarInitials.map((initial, i) => (
-                <div
-                  key={i}
-                  className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold text-white"
-                  style={{
-                    background: avatarColors[i],
-                    border: "2px solid rgba(255,255,255,0.3)",
-                    marginLeft: i === 0 ? 0 : -10,
-                    zIndex: avatarInitials.length - i,
-                    position: "relative",
-                  }}
-                >
-                  {initial}
-                </div>
-              ))}
+            <div className="flex items-center gap-3">
+              <div className="flex">
+                {avatarInitials.map((initial, i) => (
+                  <div
+                    key={i}
+                    className="w-8 h-8 rounded-full grid place-items-center text-[11px] font-bold text-white border-2 border-white/30 relative"
+                    style={{ background: avatarColors[i], marginLeft: i === 0 ? 0 : -10, zIndex: 5 - i }}
+                  >
+                    {initial}
+                  </div>
+                ))}
+              </div>
+              <div>
+                <p className="text-white text-sm font-semibold leading-tight">{c.socialProofTitle}</p>
+                <p className="text-[10px] text-[rgba(255,200,200,0.75)]">{c.socialProofSubtitle}</p>
+              </div>
             </div>
-            <div>
-              <p className="text-white text-sm font-semibold leading-tight" style={{ textShadow: "0 1px 4px rgba(0,0,0,0.3)" }}>
-                1000+ Daily Hustlers
-              </p>
-              <p className="text-[10px]" style={{ color: "rgba(255,200,200,0.7)" }}>already enrolled</p>
-            </div>
-          </div>
+          </In>
         </div>
 
-        {/* ════ RIGHT SIDE ════ */}
-        <div
-          className="flex-1 flex flex-col items-center justify-center relative pt-6 lg:pt-0"
-          style={{
-            opacity: visible ? 1 : 0,
-            transform: visible ? "translateY(0)" : "translateY(24px)",
-            transition: "opacity 0.8s ease, transform 0.8s ease",
-            transitionDelay: "200ms",
-          }}
-        >
-          {/* Quote ABOVE portrait */}
-          <div
-            className="w-full text-center pb-4 relative z-10 px-4"
-            style={{ fontFamily: "var(--font-cormorant), 'Cormorant Garamond', Georgia, serif" }}
-          >
-            <div className="flex items-center justify-center gap-4 mb-3">
-              <div className="h-px flex-1 max-w-[60px]" style={{ background: "linear-gradient(to right, transparent, rgba(255,255,255,0.5))" }} />
-              <span className="text-[10px] font-bold tracking-[0.3em]" style={{ color: "rgba(255,255,255,0.6)", fontFamily: "var(--font-inter), Inter, sans-serif" }}>✦</span>
-              <div className="h-px flex-1 max-w-[60px]" style={{ background: "linear-gradient(to left, transparent, rgba(255,255,255,0.5))" }} />
-            </div>
-            <p
-              className="text-white text-xl sm:text-2xl lg:text-[2rem] font-light tracking-[0.06em] leading-snug"
-              style={{ textShadow: "0 2px 8px rgba(0,0,0,0.4)" }}
-            >
-              Stop Chasing.
-            </p>
-            <p
-              className="text-2xl sm:text-3xl lg:text-[2.4rem] font-semibold tracking-[0.04em] mt-1"
-              style={{ color: "#fff", textShadow: "0 0 24px rgba(0,0,0,0.5), 0 2px 8px rgba(0,0,0,0.4)" }}
-            >
-              Be The One To Be Chased.
-            </p>
+        <In delay={200} className="flex-1 flex flex-col items-center justify-center relative pt-10 lg:pt-0">
+          <div className="w-full text-center pb-4 px-4 font-serif">
+            <p className="text-white text-xl sm:text-2xl lg:text-[2rem] font-light tracking-[0.06em] [text-shadow:0_2px_8px_rgba(0,0,0,0.4)]">{c.quoteTop}</p>
+            <p className="text-2xl sm:text-3xl lg:text-[2.4rem] font-semibold tracking-[0.04em] mt-1 text-white [text-shadow:0_0_24px_rgba(0,0,0,0.5)]">{c.quoteMain}</p>
           </div>
-
-          {/* Portrait */}
-          <div className="relative flex items-center justify-center w-full">
-            <div
-              className="absolute inset-0 pointer-events-none z-0"
-              style={{ background: "radial-gradient(ellipse 70% 80% at 50% 50%, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.2) 50%, transparent 75%)" }}
-            />
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/bewho.jpg"
-              alt="Ashish Chhipa"
-              className="relative z-10 h-auto object-contain select-none
-                w-[75vw] max-w-[300px]
-                sm:w-[60vw] sm:max-w-[380px]
-                lg:w-full lg:max-w-[480px]"
-              style={{
-                userSelect: "none",
-                WebkitUserDrag: "none",
-                borderRadius: "24px",
-                filter: "drop-shadow(0 0 32px rgba(0,0,0,0.8)) drop-shadow(0 0 64px rgba(0,0,0,0.5))",
-              } as React.CSSProperties}
+          <div className="relative w-[75vw] max-w-[300px] sm:max-w-[380px] lg:max-w-[460px] aspect-[4/5]">
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_80%_at_50%_50%,rgba(0,0,0,0.6)_0%,transparent_75%)]" />
+            <Image
+              src={asset(c.portrait)}
+              alt={c.quoteAuthor}
+              fill
+              sizes="(max-width: 640px) 75vw, 460px"
+              preload
+              className="object-cover rounded-3xl drop-shadow-[0_0_40px_rgba(0,0,0,0.8)] select-none"
               draggable={false}
             />
           </div>
-
-          {/* Quote BELOW portrait */}
-          <div
-            className="w-full text-center pt-2 pb-6 relative z-10 px-4"
-            style={{ fontFamily: "var(--font-cormorant), 'Cormorant Garamond', Georgia, serif" }}
-          >
-            <div className="flex items-center justify-center gap-4 mt-2">
-              <div className="h-px flex-1 max-w-[60px]" style={{ background: "linear-gradient(to right, transparent, rgba(255,255,255,0.4))" }} />
-              <span className="text-xs italic font-medium tracking-widest" style={{ color: "rgba(255,220,220,0.75)" }}>
-                — Ashish Chhipa
-              </span>
-              <div className="h-px flex-1 max-w-[60px]" style={{ background: "linear-gradient(to left, transparent, rgba(255,255,255,0.4))" }} />
-            </div>
-          </div>
-        </div>
+          <p className="pt-4 pb-6 text-xs italic font-medium tracking-widest text-[rgba(255,220,220,0.75)] font-serif">{c.quoteAuthor}</p>
+        </In>
       </div>
-
-      {/* Bottom border */}
-      <div className="relative z-10 w-full h-px" style={{ background: "rgba(0,0,0,0.3)" }} />
     </section>
   );
 }
