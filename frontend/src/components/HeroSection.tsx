@@ -24,7 +24,7 @@ export default function HeroSection() {
     if (cardRef.current) cardRef.current.style.transform = "";
   };
 
-  const lines = [hero.line1, hero.line2, hero.line3].filter(Boolean);
+  const lines = [[hero.line1, hero.line2, hero.line3].filter(Boolean).join(" ")]
 
   return (
     <section id="about" className="relative min-h-[100svh] bg-black overflow-hidden flex items-center pt-20">
