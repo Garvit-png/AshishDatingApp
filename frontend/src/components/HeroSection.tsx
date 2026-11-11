@@ -36,7 +36,7 @@ export default function HeroSection() {
       <div className="relative z-10 w-full max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 py-12 md:py-20">
         <div className="flex flex-col lg:flex-row items-center justify-between gap-10 lg:gap-16">
           <div className="flex-1 w-full flex flex-col items-center lg:items-start text-center lg:text-left">
-            <h2 className="text-[11vw] sm:text-[8vw] lg:text-[5.2vw] xl:text-[4.25rem] font-black text-white leading-[1.02] mb-5 md:mb-7 tracking-tighter w-full">
+            <h2 className="text-[7.5vw] sm:text-[8vw] lg:text-[5.2vw] xl:text-[4.25rem] font-black text-white leading-[1.02] mb-5 md:mb-7 tracking-tighter whitespace-nowrap w-full">
               {lines.map((line, i) => (
                 <span key={i} className="block overflow-hidden pb-[0.08em]">
                   <Reveal as="span" variant="up" delay={i * 120} className={`block ${i === 1 ? "text-gradient" : ""}`}>
